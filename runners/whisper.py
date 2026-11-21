@@ -49,18 +49,20 @@ def main():
     a = p.parse_args()
 
     done = finished(a.out)
+    with open(a.manifest, encoding="utf-8") as f:
+        rows = [r for r in map(json.loads, f) if r["id"] not in done]
+    print(f"whisper: {len(done)} clips already done, {len(rows)} to go", flush=True)
     model = WhisperModel(a.model, device=a.device, compute_type="default")
-    with open(a.manifest, encoding="utf-8") as f, open(a.out, "a", encoding="utf-8") as out:
-        for line in f:
-            r = json.loads(line)
-            if r["id"] in done:
-                continue
+    with open(a.out, "a", encoding="utf-8") as out:
+        for n, r in enumerate(rows, 1):
             hyp = None
             if lang := WHISPER.get(r["language"]):
                 segments, _ = model.transcribe(r["audio"], language=lang, beam_size=5)
                 hyp = " ".join(s.text.strip() for s in segments)
             out.write(json.dumps({"id": r["id"], "model": f"whisper-{a.model}", "hyp": hyp}, ensure_ascii=False) + "\n")
             out.flush()
+            if n % 100 == 0 or n == len(rows):
+                print(f"whisper: {n}/{len(rows)}", flush=True)
 
 
 if __name__ == "__main__":

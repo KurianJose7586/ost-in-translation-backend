@@ -38,6 +38,7 @@ def main():
         rows = [r for r in map(json.loads, f) if r["id"] not in done]
     line = lambda r, hyp: json.dumps({"id": r["id"], "model": a.model, "hyp": hyp}, ensure_ascii=False) + "\n"
     todo = [r for r in rows if r["language"] in OMNILINGUAL]
+    print(f"omnilingual: {len(done)} clips already done, {len(todo)} to go", flush=True)
     pipeline = ASRInferencePipeline(model_card=a.model) if todo else None
     with open(a.out, "a", encoding="utf-8") as out:
         out.writelines(line(r, None) for r in rows if r["language"] not in OMNILINGUAL)
@@ -47,6 +48,7 @@ def main():
             hyps = pipeline.transcribe([r["audio"] for r in chunk], lang=lang, batch_size=a.batch)
             out.writelines(line(r, h) for r, h in zip(chunk, hyps))
             out.flush()
+            print(f"omnilingual: {min(i + CHUNK, len(todo))}/{len(todo)}", flush=True)
 
 
 if __name__ == "__main__":

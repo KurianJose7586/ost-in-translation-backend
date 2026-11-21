@@ -24,4 +24,5 @@ uv run runners/indicconformer.py "$M" runs/m0/indicconformer.jsonl || echo "indi
 
 outs=$(ls runs/m0/whisper.jsonl runs/m0/omnilingual.jsonl runs/m0/indicconformer.jsonl 2>/dev/null)
 uv run atlas-eval "$M" $outs -o runs/m0/atlas.json --round m0
-echo "done: $(ls runs/m0)"
+for f in $outs; do echo "$f: $(wc -l < "$f") of $(wc -l < "$M") clips"; done
+echo "done"

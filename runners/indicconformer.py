@@ -32,12 +32,12 @@ def main():
     a = p.parse_args()
 
     done = finished(a.out)
+    with open(a.manifest, encoding="utf-8") as f:
+        rows = [r for r in map(json.loads, f) if r["id"] not in done]
+    print(f"indicconformer: {len(done)} clips already done, {len(rows)} to go", flush=True)
     model = AutoModel.from_pretrained(MODEL, trust_remote_code=True)
-    with open(a.manifest, encoding="utf-8") as f, open(a.out, "a", encoding="utf-8") as out:
-        for line in f:
-            r = json.loads(line)
-            if r["id"] in done:
-                continue
+    with open(a.out, "a", encoding="utf-8") as out:
+        for n, r in enumerate(rows, 1):
             hyp = None
             if lang := INDICCONFORMER.get(r["language"]):
                 audio, sr = sf.read(r["audio"], dtype="float32", always_2d=True)
@@ -45,6 +45,8 @@ def main():
                 hyp = model(wav, lang, a.decoder)
             out.write(json.dumps({"id": r["id"], "model": f"indicconformer-{a.decoder}", "hyp": hyp}, ensure_ascii=False) + "\n")
             out.flush()
+            if n % 100 == 0 or n == len(rows):
+                print(f"indicconformer: {n}/{len(rows)}", flush=True)
 
 
 if __name__ == "__main__":
