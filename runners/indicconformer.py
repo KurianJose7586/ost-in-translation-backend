@@ -1,5 +1,5 @@
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.10,<3.13"
 # dependencies = ["transformers", "torch", "torchaudio", "soundfile", "onnxruntime"]
 # ///
 """Transcribe a manifest with AI4Bharat's IndicConformer (600M, multilingual).

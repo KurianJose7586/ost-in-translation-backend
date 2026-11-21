@@ -1,5 +1,5 @@
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.10,<3.13"  # fairseq2n ships wheels only up to Python 3.12
 # dependencies = ["omnilingual-asr"]
 # ///
 """Transcribe a manifest with Meta's Omnilingual ASR. Linux only (fairseq2).

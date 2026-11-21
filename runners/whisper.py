@@ -1,6 +1,6 @@
 # /// script
-# requires-python = ">=3.10"
-# dependencies = ["faster-whisper"]
+# requires-python = ">=3.10,<3.13"
+# dependencies = ["faster-whisper", "av<19"]  # PyAV 19 dropped an argument faster-whisper 1.2.1 passes
 # ///
 """Transcribe a manifest with Whisper through faster-whisper.
 
