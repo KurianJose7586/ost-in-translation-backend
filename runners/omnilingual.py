@@ -3,6 +3,7 @@
 # dependencies = [
 #   "omnilingual-asr",
 #   "torchaudio==2.8.*",  # fairseq2n pins torch 2.8; an unpinned torchaudio floats to a build that won't load
+#   "pyarrow<26",  # fairseq2 pins NumPy 1.x, and pyarrow 26 refuses to load without NumPy 2
 # ]
 # ///
 """Transcribe a manifest with Meta's Omnilingual ASR. Linux only (fairseq2).
