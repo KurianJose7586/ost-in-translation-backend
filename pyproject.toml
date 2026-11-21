@@ -1,0 +1,17 @@
+[project]
+name = "atlas-eval"
+version = "0.1.0"
+description = "Per-district speech recognition scoring for the Lost in Transcription atlas"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["jiwer>=3.0", "numpy"]
+
+[project.scripts]
+atlas-eval = "atlas_eval.score:main"
+
+[dependency-groups]
+dev = ["pytest"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

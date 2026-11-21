@@ -1,0 +1,71 @@
+input	expected	rule
+क़लम	कलम	precomposed क़ (U+0958) decomposes under NFC, then loses its nukta
+क़लम	कलम	decomposed क़ loses its nukta
+ज़रूर	जरूर	nukta dropped: ज़
+फ़ोन	फोन	nukta dropped: फ़
+ख़बर	खबर	nukta dropped: ख़
+ग़लत	गलत	nukta dropped: ग़
+सफ़ेद	सफेद	nukta dropped mid-word
+ज़्यादा	ज्यादा	nukta dropped before a virama
+ज़्यादातर शब्दों	ज्यादातर शब्दों	nukta dropped in a phrase
+सड़क	सड़क	ड़ keeps its nukta
+पढ़ाई	पढ़ाई	ढ़ keeps its nukta
+सड़क	सड़क	precomposed ड़ (U+095C) equals ड + nukta
+बढ़िया लड़का	बढ़िया लड़का	ड़ and ढ़ unchanged in a phrase
+माँ	मां	chandrabindu becomes anusvara
+गाँव	गांव	chandrabindu becomes anusvara
+आँख	आंख	chandrabindu becomes anusvara
+चाँद	चांद	chandrabindu becomes anusvara
+पाँच	पांच	chandrabindu becomes anusvara
+हँसी	हंसी	chandrabindu becomes anusvara
+हैँ	हैं	chandrabindu over a vowel sign
+हिन्दी	हिंदी	न् before द becomes anusvara
+सम्बन्ध	संबंध	म् before ब and न् before ध
+गङ्गा	गंगा	ङ् before ग
+पञ्चायत	पंचायत	ञ् before च
+ठण्डा	ठंडा	ण् before ड
+अन्त	अंत	न् before त
+कम्पनी	कंपनी	म् before प
+सन्देश	संदेश	न् before द
+चम्पा	चंपा	म् before प
+ज़िन्दगी	जिंदगी	nukta and nasal rules together
+जन्म	जन्म	न् before म is a different class: unchanged
+अन्य	अन्य	न् before य: unchanged
+उन्होंने	उन्होंने	न् before ह: unchanged
+सम्मान	सम्मान	म् before म: unchanged
+तुम्हारा	तुम्हारा	म् before ह: unchanged
+अन्न	अन्न	न् before न: unchanged
+किताब	किताब	vowel signs kept (Whisper's normaliser would split this word)
+प्रधानमंत्री	प्रधानमंत्री	conjuncts and anusvara kept
+कृपया	कृपया	vocalic r sign kept
+क्षत्रिय	क्षत्रिय	क्ष conjunct kept
+क्‍ष	क्ष	ZWJ deleted
+क्‌ष	क्ष	ZWNJ deleted
+﻿नमस्ते	नमस्ते	byte order mark deleted
+राम​श्याम	राम श्याम	zero-width space is a word break
+मैं घर गया।	मैं घर गया	danda removed
+॥ राम ॥	राम	double danda removed
+क्या हाल है?	क्या हाल है	question mark removed
+हाँ, ठीक है!	हां ठीक है	comma, exclamation mark and chandrabindu
+धीरे-धीरे	धीरे धीरे	hyphen splits words
+“नमस्ते”	नमस्ते	curly quotes removed
+अच्छा...	अच्छा	ellipsis removed
+राम, श्याम और सीता	राम श्याम और सीता	commas between words
+।		punctuation only gives an empty string
+		empty input
+२०२४	2024	Devanagari digits become ASCII
+१० रुपये	10 रुपये	Devanagari digits become ASCII
+₹५०	50	currency symbol removed, digits converted
+10 बजे	10 बजे	ASCII digits unchanged
+  राम   श्याम  	राम श्याम	spaces collapsed and trimmed
+राम\u0009श्याम	राम श्याम	tab becomes a space
+राम\u000aश्याम	राम श्याम	newline becomes a space
+Mobile फोन	mobile फोन	Latin script lowercased
+WhatsApp पर भेजो	whatsapp पर भेजो	Latin script lowercased in code-mixed speech
+don't	dont	apostrophe deleted, not turned into a space
+Hello, World!	hello world	English punctuation removed
+OK	ok	Latin script lowercased
+मेरा ID card	मेरा id card	code-mixed phrase
+हिन्दी में बात करो।	हिंदी में बात करो	nasal rule and danda in a sentence
+माँ ने कहा, “सड़क पर मत जाओ”।	मां ने कहा सड़क पर मत जाओ	several rules in one sentence
+ज़िन्दगी के १० साल!	जिंदगी के 10 साल	nukta, nasal, digits and punctuation together
