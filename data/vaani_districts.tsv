@@ -1,0 +1,150 @@
+state	district	map	how	note
+AndhraPradesh	Anantpur	andhra-pradesh-anantapur	fuzzy	
+AndhraPradesh	Chittoor	andhra-pradesh-chittoor	exact	
+AndhraPradesh	Guntur	andhra-pradesh-guntur	exact	
+AndhraPradesh	Krishna	andhra-pradesh-krishna	exact	
+AndhraPradesh	Manyam	andhra-pradesh-vizianagaram	manual	created 2022, mostly from Vizianagaram
+AndhraPradesh	SriSatyaSai	andhra-pradesh-anantapur	manual	created 2022 from Anantapur; shares its 2011 polygon
+AndhraPradesh	Srikakulam	andhra-pradesh-srikakulam	exact	
+AndhraPradesh	Vishakapattanam	andhra-pradesh-visakhapatnam	fuzzy	
+ArunachalPradesh	Longding	arunanchal-pradesh-tirap	manual	created 2012 from Tirap
+ArunachalPradesh	LowerDibangvalley	arunanchal-pradesh-lower-dibang-valley	manual	
+ArunachalPradesh	PapumPare	arunanchal-pradesh-papum-pare	manual	
+Assam	Hailakandi	assam-hailakandi	exact	
+Assam	KamrupMetropolitan	assam-kamrup-metropolitan	exact	
+Assam	Sonitpur	assam-sonitpur	exact	
+Bihar	Araria	bihar-araria	exact	
+Bihar	Begusarai	bihar-begusarai	exact	
+Bihar	Bhagalpur	bihar-bhagalpur	exact	
+Bihar	Darbhanga	bihar-darbhanga	exact	
+Bihar	EastChamparan	bihar-purba-champaran	manual	
+Bihar	Gaya	bihar-gaya	exact	
+Bihar	Gopalganj	bihar-gopalganj	exact	
+Bihar	Jahanabad	bihar-jehanabad	fuzzy	
+Bihar	Jamui	bihar-jamui	exact	
+Bihar	Kaimur	bihar-kaimur-bhabua	manual	
+Bihar	Katihar	bihar-katihar	exact	
+Bihar	Kishanganj	bihar-kishanganj	exact	
+Bihar	Lakhisarai	bihar-lakhisarai	exact	
+Bihar	Madhepura	bihar-madhepura	exact	
+Bihar	Muzaffarpur	bihar-muzaffarpur	exact	
+Bihar	Patna	bihar-patna	exact	
+Bihar	Purnia	bihar-purnia	exact	
+Bihar	Saharsa	bihar-saharsa	exact	
+Bihar	Samastipur	bihar-samastipur	exact	
+Bihar	Saran	bihar-saran-chhapra	manual	
+Bihar	Sitamarhi	bihar-sitamarhi	exact	
+Bihar	Supaul	bihar-supaul	exact	
+Bihar	Vaishali	bihar-vaishali	exact	
+Bihar	WestChamparan	bihar-pashchim-champaran	manual	
+Chandigarh	Chandigarh	chandigarh-chandigarh	exact	
+Chhattisgarh	Balrampur	chhattisgarh-surguja	manual	created 2012 from Surguja; shares its 2011 polygon
+Chhattisgarh	Bastar	chhattisgarh-bastar	exact	
+Chhattisgarh	Bilaspur	chhattisgarh-bilaspur	exact	
+Chhattisgarh	Jashpur	chhattisgarh-jashpur	exact	
+Chhattisgarh	Kabirdham	chhattisgarh-kabeerdham	fuzzy	
+Chhattisgarh	Korba	chhattisgarh-korba	exact	
+Chhattisgarh	Koriya	chhattisgarh-koriya	exact	
+Chhattisgarh	Narayanpur	chhattisgarh-narayanpur	exact	
+Chhattisgarh	Raigarh	chhattisgarh-raigarh	exact	
+Chhattisgarh	Raipur	chhattisgarh-raipur	exact	
+Chhattisgarh	Rajnandgaon	chhattisgarh-rajnandgaon	exact	
+Chhattisgarh	Sarguja	chhattisgarh-surguja	fuzzy	
+Chhattisgarh	Sukma	chhattisgarh-dakshin-bastar-dantewada	manual	created 2012 from Dantewada
+Delhi	NewDelhi	nct-of-delhi-new-delhi	exact	
+Goa	NorthSouthGoa	goa-north-goa,goa-south-goa	manual	Vaani treats Goa's two districts as one
+Gujarat	DevbhoomiDwarka	gujarat-jamnagar	manual	created 2013 from Jamnagar
+Gujarat	Gandhinagar	gujarat-gandhinagar	exact	
+Gujarat	Navsari	gujarat-navsari	exact	
+Gujarat	Valsad	gujarat-valsad	exact	
+Haryana	CharkhiDadri	haryana-bhiwani	manual	created 2016 from Bhiwani
+Haryana	Jhajjar	haryana-jhajjar	exact	
+Haryana	Rohtak	haryana-rohtak	exact	
+HimachalPradesh	Shimla	himachal-pradesh-shimla	exact	
+JammuAndKashmir	Srinagar	jammu-kashmir-srinagar	manual	
+Jharkhand	Deoghar	jharkhand-deoghar	exact	
+Jharkhand	Garhwa	jharkhand-garhwa	exact	
+Jharkhand	Jamtara	jharkhand-jamtara	exact	
+Jharkhand	Palamu	jharkhand-palamu	exact	
+Jharkhand	Ranchi	jharkhand-ranchi	exact	
+Jharkhand	Sahebganj	jharkhand-sahibganj	fuzzy	
+Karnataka	Bangalore	karnataka-bangalore	exact	
+Karnataka	Belgaum	karnataka-belgaum	exact	
+Karnataka	Bellary	karnataka-bellary	exact	
+Karnataka	Bidar	karnataka-bidar	exact	
+Karnataka	Bijapur	karnataka-bijapur	exact	
+Karnataka	Chamarajanagar	karnataka-chamrajnagar	fuzzy	
+Karnataka	DakshinaKannada	karnataka-dakshina-kannada	exact	
+Karnataka	Dharwad	karnataka-dharwad	exact	
+Karnataka	Gulbarga	karnataka-gulbarga	exact	
+Karnataka	Koppal	karnataka-koppal	exact	
+Karnataka	Mysore	karnataka-mysore	exact	
+Karnataka	Raichur	karnataka-raichur	exact	
+Karnataka	Shimoga	karnataka-shimoga	exact	
+MadhyaPradesh	Bhopal	madhya-pradesh-bhopal	exact	
+MadhyaPradesh	Dhar	madhya-pradesh-dhar	exact	
+MadhyaPradesh	Katni	madhya-pradesh-katni	exact	
+MadhyaPradesh	Umaria	madhya-pradesh-umaria	exact	
+Maharashtra	Aurangabad	maharashtra-aurangabad	exact	
+Maharashtra	Chandrapur	maharashtra-chandrapur	exact	
+Maharashtra	Dhule	maharashtra-dhule	exact	
+Maharashtra	Gondia	maharashtra-gondiya	fuzzy	
+Maharashtra	Mumbaisuburban	maharashtra-mumbai-suburban	exact	
+Maharashtra	Nagpur	maharashtra-nagpur	exact	
+Maharashtra	Pune	maharashtra-pune	exact	
+Maharashtra	Sindhudurg	maharashtra-sindhudurg	exact	
+Maharashtra	Solapur	maharashtra-solapur	exact	
+Maharashtra	Washim	maharashtra-washim	exact	
+Manipur	ImphalWest	manipur-imphal-west	exact	
+Meghalaya	WestGaroHills	meghalaya-west-garo-hills	exact	
+Mizoram	Aizawl	mizoram-aizawl	exact	
+Nagaland	Dimapur	nagaland-dimapur	exact	
+Nagaland	Kohima	nagaland-kohima	exact	
+Odisha	Khordha	odisha-khordha	exact	
+Odisha	Malkangiri	odisha-malkangiri	exact	
+Odisha	Nuapada	odisha-nuapada	exact	
+Odisha	Sambalpur	odisha-sambalpur	exact	
+Punjab	Fazilka	punjab-firozpur	manual	created 2011 from Firozpur
+Punjab	Kapurthala	punjab-kapurthala	exact	
+Punjab	Pathankot	punjab-gurdaspur	manual	created 2011 from Gurdaspur
+Rajasthan	Barmer	rajasthan-barmer	exact	
+Rajasthan	Bikaner	rajasthan-bikaner	exact	
+Rajasthan	Churu	rajasthan-churu	exact	
+Rajasthan	Jaipur	rajasthan-jaipur	exact	
+Rajasthan	Jaisalmer	rajasthan-jaisalmer	exact	
+Rajasthan	Nagaur	rajasthan-nagaur	exact	
+Sikkim	Gangtok	sikkim-east	manual	Gangtok is East Sikkim's headquarters
+Telangana	Adilabad	andhra-pradesh-adilabad	exact	
+Telangana	Hyderabad	andhra-pradesh-hyderabad	exact	
+Telangana	Karimnagar	andhra-pradesh-karimnagar	exact	
+Telangana	Nalgonda	andhra-pradesh-nalgonda	exact	
+Tripura	Dhalai	tripura-dhalai	exact	
+Tripura	Unakoti	tripura-north-tripura	manual	created 2012 from North Tripura
+Tripura	WestTripura	tripura-west-tripura	exact	
+UttarPradesh	Budaun	uttar-pradesh-budaun	exact	
+UttarPradesh	Deoria	uttar-pradesh-deoria	exact	
+UttarPradesh	Etah	uttar-pradesh-etah	exact	
+UttarPradesh	Ghazipur	uttar-pradesh-ghazipur	exact	
+UttarPradesh	Gorakhpur	uttar-pradesh-gorakhpur	exact	
+UttarPradesh	Hamirpur	uttar-pradesh-hamirpur	exact	
+UttarPradesh	Jalaun	uttar-pradesh-jalaun	exact	
+UttarPradesh	JyotibaPhuleNagar	uttar-pradesh-jyotiba-phule-nagar	exact	
+UttarPradesh	Lalitpur	uttar-pradesh-lalitpur	exact	
+UttarPradesh	Lucknow	uttar-pradesh-lucknow	exact	
+UttarPradesh	Muzaffarnagar	uttar-pradesh-muzaffarnagar	exact	
+UttarPradesh	Saharanpur	uttar-pradesh-saharanpur	exact	
+UttarPradesh	Shamli	uttar-pradesh-muzaffarnagar	manual	created 2011 from Muzaffarnagar; shares its 2011 polygon
+UttarPradesh	Varanasi	uttar-pradesh-varanasi	exact	
+Uttarakhand	TehriGarhwal	uttarakhand-tehri-garhwal	exact	
+Uttarakhand	Uttarkashi	uttarakhand-uttarkashi	exact	
+WestBengal	Alipurduar	west-bengal-jalpaiguri	manual	created 2014 from Jalpaiguri; shares its 2011 polygon
+WestBengal	CoochBehar	west-bengal-koch-bihar	manual	
+WestBengal	DakshinDinajpur	west-bengal-dakshin-dinajpur	exact	
+WestBengal	Darjeeling	west-bengal-darjiling	fuzzy	
+WestBengal	Jalpaiguri	west-bengal-jalpaiguri	exact	
+WestBengal	Jhargram	west-bengal-pashchim-medinipur	manual	created 2017 from Paschim Medinipur; shares its 2011 polygon
+WestBengal	Kolkata	west-bengal-kolkata	exact	
+WestBengal	Malda	west-bengal-maldah	fuzzy	
+WestBengal	North24Parganas	west-bengal-north-24-parganas	exact	
+WestBengal	PaschimMedinipur	west-bengal-pashchim-medinipur	fuzzy	
+WestBengal	Purulia	west-bengal-puruliya	fuzzy	

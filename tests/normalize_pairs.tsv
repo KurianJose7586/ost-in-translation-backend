@@ -69,3 +69,14 @@ OK	ok	Latin script lowercased
 हिन्दी में बात करो।	हिंदी में बात करो	nasal rule and danda in a sentence
 माँ ने कहा, “सड़क पर मत जाओ”।	मां ने कहा सड़क पर मत जाओ	several rules in one sentence
 ज़िन्दगी के १० साल!	जिंदगी के 10 साल	nukta, nasal, digits and punctuation together
+इस फोटो {photo} में	इस फोटो में	Vaani: Latin gloss of an English word dropped
+बैनर पोस्टर {Banner Poster} नज़र आ रहा है	बैनर पोस्टर नजर आ रहा है	Vaani: multi-word gloss dropped
+घास है [breathing] घर हैं	घास है घर हैं	Vaani: non-speech event dropped
+<noise> दीवारों का रंग पीला है </noise>	दीवारों का रंग पीला है	Vaani: noise tags dropped, the words inside kept
+<static noise> छोटे पेड़ </static noise>	छोटे पेड़	Vaani: tag with a space inside
+कैफ़े {Cafe} <horn> की अंदर की तस्वीर </horn> है	कैफे की अंदर की तस्वीर है	Vaani: gloss and noise tag together
+एल_इ_डी मॉनिटर {L_E_D Monitor}	एलइडी मॉनिटर	Vaani: underscored acronym letters joined
+बड़ा सा मकान -- </horn>	बड़ा सा मकान	Vaani: cut-off marker and stray closing tag
+<talking></talking>		Vaani: empty tag pair
+इ {इस} तस्वीर मां {में} एक दुकान	इ तस्वीर मां एक दुकान	Vaani: standard-Hindi gloss dropped, the spoken dialect form kept
+इसके आस पास <pause> बहोत सन्नाटा है। <PAUSE>	इसके आस पास बहोत सन्नाटा है	Vaani: pause tags in either case

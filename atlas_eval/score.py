@@ -104,6 +104,8 @@ def build(clips, hyps, round_name="baseline"):
             "languages": {lang: n / len(ids) for lang, n in langs.most_common()},
             "results": {},
         }
+        if polygons := clips[ids[0]].get("map"):
+            d["map"] = polygons  # 2011 map polygons this district covers
         aligned = defaultdict(dict)
         for model, h in sorted(hyps.items()):
             seen = [i for i in ids if i in h]

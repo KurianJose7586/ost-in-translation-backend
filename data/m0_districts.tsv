@@ -1,0 +1,12 @@
+# M0 test districts: Hindi speech from ten districts across the Hindi belt's dialect regions.
+# state	district	why (Vaani's spelling for both names)
+UttarPradesh	Lucknow	Awadhi region, state capital
+Bihar	Patna	Magahi region, state capital
+Bihar	WestChamparan	Bhojpuri region, rural
+Jharkhand	Garhwa	Bhojpuri and Sadri contact, rural
+UttarPradesh	Lalitpur	Bundeli region
+MadhyaPradesh	Katni	Bagheli region
+MadhyaPradesh	Dhar	Malvi and Bhili region, tribal
+Rajasthan	Bikaner	Marwari region
+Haryana	Rohtak	Haryanvi region
+Chhattisgarh	Kabirdham	Chhattisgarhi region, rural

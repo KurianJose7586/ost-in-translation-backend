@@ -11,6 +11,7 @@ atlas-eval = "atlas_eval.score:main"
 
 [dependency-groups]
 dev = ["pytest"]
+data = ["huggingface_hub", "pyarrow"]
 
 [build-system]
 requires = ["hatchling"]

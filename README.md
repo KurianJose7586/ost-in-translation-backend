@@ -10,6 +10,10 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `atlas_eval/score.py` | `atlas-eval`: per-district WER and CER, speaker-bootstrap intervals, shrinkage for map colours; writes the JSON the site reads |
 | `runners/` | One script per baseline. Each reads a manifest and writes raw transcripts. `uv run` gives each its own environment |
 | `data/fleurs.py` | Builds a small FLEURS Hindi manifest for smoke tests |
+| `data/vaani.py` | Indexes Vaani's files, cuts a test slice, and fetches the slice's audio. It reads only footers and the row groups it needs, because Vaani is tens of terabytes and the Hub allows 5,000 requests per five minutes |
+| `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
+| `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
+| `runners/kaggle_m0.sh` | Runs M0 end to end on a Kaggle GPU: fetch audio, three baselines, score |
 
 ## Formats
 
@@ -27,7 +31,18 @@ uv run runners/whisper.py runs/fleurs/manifest.jsonl runs/fleurs/whisper.jsonl -
 uv run atlas-eval runs/fleurs/manifest.jsonl runs/fleurs/whisper.jsonl -o runs/fleurs/atlas.json
 ```
 
-On a laptop CPU, use `--model tiny` to check the plumbing. Omnilingual ASR runs only on Linux, and IndicConformer needs its Hugging Face terms accepted first; run both on Kaggle or the DGX.
+On a laptop CPU, use `--model tiny` to check the plumbing. Omnilingual ASR runs only on Linux, and IndicConformer needs its Hugging Face terms accepted first; run both on Kaggle or the GPU slice.
+
+## M0 on Vaani
+
+Accept Vaani's terms on Hugging Face and log in (`hf auth login`) first.
+
+```sh
+uv run --group data python data/vaani.py index Hindi runs/vaani/Hindi.json        # ~10 min, one request per file
+uv run --group data python data/vaani.py slice runs/vaani/Hindi.json data/m0_districts.tsv -o data/manifests/m0.jsonl
+```
+
+The slice is committed, so you don't need to rebuild it. Manifests contain transcripts from [Vaani](https://vaani.iisc.ac.in) by IISc and ARTPARK (CC BY 4.0); speaker IDs are replaced by hashes, because some embed fragments of names. The baselines run on Kaggle; the instructions are at the top of `runners/kaggle_m0.sh`.
 
 ## Rules
 
