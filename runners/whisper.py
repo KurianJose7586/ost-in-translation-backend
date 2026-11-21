@@ -1,6 +1,11 @@
 # /// script
 # requires-python = ">=3.10,<3.13"
-# dependencies = ["faster-whisper", "av<19"]  # PyAV 19 dropped an argument faster-whisper 1.2.1 passes
+# dependencies = [
+#   "faster-whisper",
+#   "av<19",  # PyAV 19 dropped an argument faster-whisper 1.2.1 passes
+#   "nvidia-cublas-cu12; sys_platform == 'linux'",  # CTranslate2's GPU path needs CUDA 12 cuBLAS
+#   "nvidia-cudnn-cu12==9.*; sys_platform == 'linux'",  # and cuDNN 9
+# ]
 # ///
 """Transcribe a manifest with Whisper through faster-whisper.
 
@@ -9,11 +14,30 @@
 
 import argparse
 import json
+import os
+import sys
 
-from faster_whisper import WhisperModel
 
-from langs import WHISPER
-from resume import finished
+def _cuda_libs_on_path():
+    """Point the loader at the pip copies of cuBLAS and cuDNN, restarting once so it sees them."""
+    try:
+        import nvidia.cublas.lib
+        import nvidia.cudnn.lib
+    except ImportError:
+        return  # not Linux: nothing to do
+    dirs = [list(m.__path__)[0] for m in (nvidia.cublas.lib, nvidia.cudnn.lib)]
+    current = os.environ.get("LD_LIBRARY_PATH", "")
+    if not set(dirs) <= set(current.split(":")):
+        os.environ["LD_LIBRARY_PATH"] = ":".join(dirs + [current])
+        os.execv(sys.executable, [sys.executable, *sys.argv])
+
+
+_cuda_libs_on_path()
+
+from faster_whisper import WhisperModel  # noqa: E402
+
+from langs import WHISPER  # noqa: E402
+from resume import finished  # noqa: E402
 
 
 def main():
