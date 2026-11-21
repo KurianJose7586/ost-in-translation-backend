@@ -27,3 +27,11 @@ def test_build():
     assert 0.2 < m["wer_pooled"] < 0.4
     assert b["results"]["m"]["wer_pooled"] == 0.0
     assert [e["id"] for e in a["examples"]] == ["1", "2"]
+
+
+def test_lenient_wer():
+    # "हैं" heard as "है" is a strict error but a lenient match; a wrong word is an error in both.
+    clips = dict([clip("1", "A", "s1", "ये घर हैं"), clip("2", "A", "s2", "ये घास है")])
+    m = build(clips, {"m": {"1": "ये घर है", "2": "ये घर है"}})["districts"][0]["results"]["m"]
+    assert m["wer"] == 2 / 6 and m["wer_lenient"] == 1 / 6
+    assert m["ci_lenient"][0] <= m["wer_lenient"] <= m["ci_lenient"][1]

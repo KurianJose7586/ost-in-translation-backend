@@ -2,7 +2,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from atlas_eval.normalize import normalise
+from atlas_eval.normalize import lenient, normalise
 
 
 def unescape(s):
@@ -19,3 +19,11 @@ def test_pairs():
         if got != want:
             failures.append((rule, inp, got, want))
     assert not failures, "\n".join(map(repr, failures))
+
+
+def test_lenient():
+    # The nasal mark and same-word variants are forgiven; everything normalise() does still applies.
+    assert lenient("जिसमें बहोत कि हैं।") == lenient("जिसमे बहुत की है") == "जिसमे बहुत की है"
+    assert lenient("यह पे") == "ये पर"
+    assert lenient("हिन्दी {Hindi}") == "हिदी"  # nasal + virama -> anusvara -> dropped
+    assert lenient("घर") != lenient("घास")  # different words stay different

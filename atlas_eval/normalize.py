@@ -27,6 +27,14 @@ every rule has examples in tests/normalize_pairs.tsv:
 Vowel signs and the virama are kept. Whisper's BasicTextNormalizer turns them
 into spaces, which breaks Devanagari words apart; don't use it here.
 
+`lenient()` is the second metric. It applies the rules above, then also
+ignores the nasal mark (है = हैं, में = मे) and maps a short list of variants
+of the same word (बहोत = बहुत, the homophones कि = की). About a third of a
+strong model's M0 errors were these. Reporting both shows whether a district's
+score comes from hearing or from spelling conventions, and stops a model
+trained on Vaani from winning just by learning Vaani's spellings. Add a pair
+to the list only when both sides are the same word.
+
 Still open: a model that writes an English word in Latin script ("photo")
 scores an error against Vaani's Devanagari (फोटो). Vaani's braces give a
 Latin-to-Devanagari lexicon that could fix this; decide after reading M0 errors.
@@ -38,6 +46,8 @@ import unicodedata
 _NASALS = {"ङ": "कखगघ", "ञ": "चछजझ", "ण": "टठडढ", "न": "तथदध", "म": "पफबभ"}
 _NASAL_RES = [re.compile(f"{n}्(?=[{c}])") for n, c in _NASALS.items()]
 _DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+# Same word, different spelling: spoken forms Vaani writes down, homophones, a typo, an English loanword.
+_SAME_WORD = {"बहोत": "बहुत", "बोहोत": "बहुत", "कि": "की", "हे": "है", "यह": "ये", "पे": "पर", "वाइट": "व्हाइट"}
 
 
 def normalise(text: str) -> str:
@@ -52,3 +62,8 @@ def normalise(text: str) -> str:
     s = re.sub("['’_]", "", s)
     s = "".join(" " if unicodedata.category(c)[0] in "PS" else c for c in s)
     return " ".join(s.split())
+
+
+def lenient(text: str) -> str:
+    """normalise(), then ignore the nasal mark and map variants of the same word."""
+    return " ".join(_SAME_WORD.get(w, w) for w in normalise(text).replace("ं", "").split())

@@ -6,7 +6,9 @@ District WER is total word errors over total reference words, not a mean of
 clip WERs. Intervals come from a cluster bootstrap that resamples speakers,
 because clips from one speaker aren't independent. `wer_pooled` shrinks each
 district toward its language mean so a small district can't swing the map
-colours; tables show the raw `wer`.
+colours; tables show the raw `wer`. `wer_lenient` scores the same clips with
+`normalize.lenient`, which forgives spelling-only differences, using the same
+speaker resamples for its interval.
 """
 
 import argparse
@@ -17,7 +19,7 @@ from collections import Counter, defaultdict
 import jiwer
 import numpy as np
 
-from atlas_eval.normalize import normalise
+from atlas_eval.normalize import lenient, normalise
 
 BOOTSTRAP = 1000
 EXAMPLES = 3
@@ -52,20 +54,28 @@ def char_errors(ref, hyp):
     return c.substitutions + c.deletions + c.insertions
 
 
+def counts(rows):
+    """(word errors, reference words) from an alignment."""
+    return sum(op != "C" for op, _, _ in rows), sum(op != "I" for op, _, _ in rows)
+
+
 def district_stats(clips, rng):
-    """clips: (speaker, errors, words, char_errors, chars) per clip."""
-    per_speaker = defaultdict(lambda: np.zeros(2))
-    for speaker, errors, words, *_ in clips:
-        per_speaker[speaker] += (errors, words)
+    """clips: (speaker, errors, words, lenient_errors, lenient_words, char_errors, chars) per clip."""
+    per_speaker = defaultdict(lambda: np.zeros(4))
+    for speaker, *c in clips:
+        per_speaker[speaker] += c[:4]
     en = np.array(list(per_speaker.values()))
     idx = rng.integers(0, len(en), (BOOTSTRAP, len(en)))
-    boot = en[idx, 0].sum(1) / en[idx, 1].sum(1)
-    errors, words = en.sum(0)
+    boot = en[idx].sum(1)  # one row of summed [errors, words, lenient errors, lenient words] per resample
+    strict, loose = boot[:, 0] / boot[:, 1], boot[:, 2] / boot[:, 3]
+    total = en.sum(0)
     return {
-        "wer": errors / words,
-        "ci": list(np.percentile(boot, [2.5, 97.5])),
-        "se": boot.std(),
-        "cer": sum(c[3] for c in clips) / sum(c[4] for c in clips),
+        "wer": total[0] / total[1],
+        "ci": list(np.percentile(strict, [2.5, 97.5])),
+        "se": strict.std(),
+        "wer_lenient": total[2] / total[3],
+        "ci_lenient": list(np.percentile(loose, [2.5, 97.5])),
+        "cer": sum(c[5] for c in clips) / sum(c[6] for c in clips),
         "clips": len(clips),
         "speakers": len(en),
     }
@@ -89,6 +99,7 @@ def build(clips, hyps, round_name="baseline"):
     """clips: id -> manifest row. hyps: model -> id -> hypothesis (None = unsupported)."""
     rng = np.random.default_rng(0)
     refs = {i: normalise(c["text"]) for i, c in clips.items()}
+    loose_refs = {i: lenient(c["text"]) for i, c in clips.items()}
     groups = defaultdict(list)
     for i, c in clips.items():
         groups[(c["state"], c["district"])].append(i)
@@ -117,9 +128,8 @@ def build(clips, hyps, round_name="baseline"):
                     continue
                 hyp = normalise(h[i])
                 rows = aligned[i][model] = align(refs[i], hyp)
-                errors = sum(op != "C" for op, _, _ in rows)
-                words = sum(op != "I" for op, _, _ in rows)
-                scored.append((clips[i]["speaker"], errors, words, char_errors(refs[i], hyp), len(refs[i])))
+                loose = counts(align(loose_refs[i], lenient(h[i])))
+                scored.append((clips[i]["speaker"], *counts(rows), *loose, char_errors(refs[i], hyp), len(refs[i])))
             if not scored:
                 d["results"][model] = {"status": "unsupported"}
                 continue
