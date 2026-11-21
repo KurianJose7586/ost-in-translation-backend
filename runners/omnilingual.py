@@ -1,6 +1,9 @@
 # /// script
 # requires-python = ">=3.10,<3.13"  # fairseq2n ships wheels only up to Python 3.12
-# dependencies = ["omnilingual-asr"]
+# dependencies = [
+#   "omnilingual-asr",
+#   "torchaudio==2.8.*",  # fairseq2n pins torch 2.8; an unpinned torchaudio floats to a build that won't load
+# ]
 # ///
 """Transcribe a manifest with Meta's Omnilingual ASR. Linux only (fairseq2).
 
