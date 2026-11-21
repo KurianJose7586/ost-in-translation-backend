@@ -5,9 +5,10 @@
 #
 #   import os; from kaggle_secrets import UserSecretsClient
 #   os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
-#   !git clone -q https://github.com/KurianJose7586/ost-in-translation-backend.git
-#   !cd ost-in-translation-backend && bash runners/kaggle_m0.sh
+#   !test -d ost-in-translation-backend || git clone -q https://github.com/KurianJose7586/ost-in-translation-backend.git
+#   !cd ost-in-translation-backend && git pull -q && bash runners/kaggle_m0.sh
 #
+# Safe to rerun after a crash or a lost session: every step skips the clips it already finished.
 # Outputs land in runs/m0/: raw transcripts per model, and atlas.json. Download runs/m0/*.jsonl and atlas.json.
 set -uo pipefail
 pip install -q uv

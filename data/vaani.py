@@ -218,17 +218,25 @@ def fetch(manifest, out_dir):
     (out / "audio").mkdir(parents=True, exist_ok=True)
     with open(manifest, encoding="utf-8") as f:
         rows = [json.loads(line) for line in f]
-    sizes = {k: v for lang in {r["source"]["file"].split("/")[1] for r in rows} for k, v in _sizes(lang).items()}
+    # Resume: clips already on disk from an earlier, interrupted run are kept, not fetched again.
+    saved = {p.stem: p for p in (out / "audio").iterdir() if p.suffix != ".part"}
     by_file = defaultdict(dict)
     for r in rows:
-        by_file[r["source"]["file"]][r["source"]["row"]] = r
+        if r["id"] in saved:
+            r["audio"] = str(saved[r["id"]])
+        else:
+            by_file[r["source"]["file"]][r["source"]["row"]] = r
+    print(f"{len(rows) - sum(map(len, by_file.values()))} clips already saved, {sum(map(len, by_file.values()))} to fetch")
+    sizes = {k: v for lang in {f.split("/")[1] for f in by_file} for k, v in _sizes(lang).items()}
 
     def one(path):
         for a in _rows(path, sizes[path], ["audio", "speakerID"], rows=set(by_file[path])):
             r = by_file[path][a["row"]]
             assert _speaker(a["speakerID"]) == r["speaker"], f"row mismatch for {r['id']}"
             dest = out / "audio" / (r["id"] + (Path(a["audio"]["path"] or "").suffix or ".wav"))
-            dest.write_bytes(a["audio"]["bytes"])
+            part = dest.with_suffix(".part")  # a crash mid-write leaves a .part, never a half-written clip
+            part.write_bytes(a["audio"]["bytes"])
+            part.replace(dest)
             r["audio"] = str(dest)
 
     with ThreadPoolExecutor(8) as ex:

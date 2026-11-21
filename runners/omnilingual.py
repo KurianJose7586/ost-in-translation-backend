@@ -17,6 +17,9 @@ import json
 from omnilingual_asr.models.inference.pipeline import ASRInferencePipeline
 
 from langs import OMNILINGUAL
+from resume import finished
+
+CHUNK = 64  # clips transcribed between saves
 
 
 def main():
@@ -27,15 +30,20 @@ def main():
     p.add_argument("--batch", type=int, default=8)
     a = p.parse_args()
 
+    done = finished(a.out)
     with open(a.manifest, encoding="utf-8") as f:
-        rows = [json.loads(line) for line in f]
+        rows = [r for r in map(json.loads, f) if r["id"] not in done]
+    line = lambda r, hyp: json.dumps({"id": r["id"], "model": a.model, "hyp": hyp}, ensure_ascii=False) + "\n"
     todo = [r for r in rows if r["language"] in OMNILINGUAL]
-    lang = [OMNILINGUAL[r["language"]] for r in todo] if "LLM" in a.model else None
-    pipeline = ASRInferencePipeline(model_card=a.model)
-    hyps = dict(zip((r["id"] for r in todo), pipeline.transcribe([r["audio"] for r in todo], lang=lang, batch_size=a.batch)))
-    with open(a.out, "w", encoding="utf-8") as out:
-        for r in rows:
-            out.write(json.dumps({"id": r["id"], "model": a.model, "hyp": hyps.get(r["id"])}, ensure_ascii=False) + "\n")
+    pipeline = ASRInferencePipeline(model_card=a.model) if todo else None
+    with open(a.out, "a", encoding="utf-8") as out:
+        out.writelines(line(r, None) for r in rows if r["language"] not in OMNILINGUAL)
+        for i in range(0, len(todo), CHUNK):
+            chunk = todo[i : i + CHUNK]
+            lang = [OMNILINGUAL[r["language"]] for r in chunk] if "LLM" in a.model else None
+            hyps = pipeline.transcribe([r["audio"] for r in chunk], lang=lang, batch_size=a.batch)
+            out.writelines(line(r, h) for r, h in zip(chunk, hyps))
+            out.flush()
 
 
 if __name__ == "__main__":

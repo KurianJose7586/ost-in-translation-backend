@@ -13,6 +13,7 @@ import json
 from faster_whisper import WhisperModel
 
 from langs import WHISPER
+from resume import finished
 
 
 def main():
@@ -23,15 +24,19 @@ def main():
     p.add_argument("--device", default="auto")
     a = p.parse_args()
 
+    done = finished(a.out)
     model = WhisperModel(a.model, device=a.device, compute_type="default")
-    with open(a.manifest, encoding="utf-8") as f, open(a.out, "w", encoding="utf-8") as out:
+    with open(a.manifest, encoding="utf-8") as f, open(a.out, "a", encoding="utf-8") as out:
         for line in f:
             r = json.loads(line)
+            if r["id"] in done:
+                continue
             hyp = None
             if lang := WHISPER.get(r["language"]):
                 segments, _ = model.transcribe(r["audio"], language=lang, beam_size=5)
                 hyp = " ".join(s.text.strip() for s in segments)
             out.write(json.dumps({"id": r["id"], "model": f"whisper-{a.model}", "hyp": hyp}, ensure_ascii=False) + "\n")
+            out.flush()
 
 
 if __name__ == "__main__":
