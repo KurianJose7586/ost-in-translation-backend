@@ -11,6 +11,7 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `runners/` | One script per baseline. Each reads a manifest and writes raw transcripts. `uv run` gives each its own environment |
 | `data/fleurs.py` | Builds a small FLEURS Hindi manifest for smoke tests |
 | `data/vaani.py` | Indexes Vaani's files, cuts a test slice, and fetches the slice's audio. It reads only footers and the row groups it needs, because Vaani is tens of terabytes and the Hub allows 5,000 requests per five minutes |
+| `data/splits.py` | Matches a manifest's clips to Vaani's official train, validation and test split (in `ARTPARK-IISc/Vaani-transcription-part`), and compares each model on train against held-out clips as a contamination check |
 | `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
 | `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
 | `runners/kaggle_m0.sh` | Runs M0 end to end on a Kaggle GPU: fetch audio, three baselines, score |

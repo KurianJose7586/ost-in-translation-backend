@@ -88,11 +88,20 @@ The label audit still has to confirm it.
 - **No source lists Vaani in IndicConformer's training data, and none rules it out.**
   - The 600M model card says only that it covers 22 languages, and its metadata names no datasets. AI4Bharat's GitHub and AIKosh name none either.
   - Shaip, one of Vaani's three transcription vendors, also worked on IndicVoices.
-  - On Vaani-Benchmark-V1.0 (a separate held-out set of 5,050 Hindi segments, each transcribed three times), IndicConformer's published Hindi WER is 13.2. That is close to its 13.3% here. It's weak evidence against a large effect, since the clips and the normalisation differ.
-- **Vaani has an official split, in a different repository from the one M0 used.** `ARTPARK-IISc/Vaani-transcription-part` has train, validation and test for Hindi (177, 52 and 52 files, 115 GB). Vaani's paper (arXiv 2603.28714) describes 80/10/10 within each district, with no speaker in two splits. M0 sampled from `ARTPARK-IISc/Vaani`, which has only `train`.
-  - The repository is gated, and this account hasn't accepted its terms yet.
-  - Once accepted, M1 draws its frozen test sets from the test split.
-  - It also allows a contamination test: compare each model's WER on clips from the official train and test splits. A model that trained on the train split does better there, and the other models shouldn't.
+  - On Vaani-Benchmark-V1.0, IndicConformer's published Hindi WER is 13.2, against 13.3% here. The two can't be compared directly: the benchmark scores against the closest of three references, which lowers WER, and its clips and normalisation differ.
+- **Vaani has an official split, in a different repository from the one M0 used.** `ARTPARK-IISc/Vaani-transcription-part` has train, validation and test for Hindi (177, 52 and 52 files, 115 GB). Vaani's paper (arXiv 2603.28714) describes 80/10/10 within each district, with no speaker in two splits. M0 sampled from `ARTPARK-IISc/Vaani`, which has only `train`. M1 draws its frozen test sets from the official test split.
 - **How Vaani was transcribed.** The vendors were Shaip, Megdap and Karya, using guidelines adapted from Bhashini, with transcribers from the same district. A language expert reviews each batch against a 10% issue threshold. No accuracy figure is published.
 
-**Still open for M0:** the listening audit, which has 300 clips picked and its scoring ready (`audit/audit.py score`) but needs a Hindi-speaking listener. Also open: accepting the Vaani-transcription-part terms, and then the train-versus-test contamination check.
+**Train against held-out clips.** Every M0 clip is also in `Vaani-transcription-part`, matched by audio file name with an identical transcript. 967 are in the official train split, 261 in validation and 283 in test (`data/manifests/m0_splits.jsonl`, from `data/splits.py`). That is close to the 64/18/18 of the whole Hindi split, not the paper's 80/10/10. A model trained on the train split should do better on those clips than on held-out ones (validation and test), and models that weren't should do the same on both. The same clips go to every model, so comparing the models' ratios cancels how hard the clips are. Intervals resample speakers.
+
+| Model | WER, train | WER, held out | Train ÷ held out | Lenient, train ÷ held out |
+|---|---|---|---|---|
+| IndicConformer | 12.8% | 14.2% | 0.90 (0.81–1.01) | 0.89 (0.78–1.04) |
+| Omnilingual 3B | 18.2% | 19.2% | 0.95 (0.85–1.05) | 0.95 (0.84–1.07) |
+| Whisper-large-v3 | 25.6% | 26.4% | 0.97 (0.89–1.07) | 0.98 (0.89–1.09) |
+
+- **IndicConformer gains a little more on train clips than the others, and the gap is too small to be sure of.** Against Whisper its ratio is 0.93 (0.86–1.01), or 0.91 (0.83–1.00) lenient. Against Omnilingual it's 0.95 (0.88–1.04). If the gap is real, it's worth about a point of WER on train clips.
+- **IndicConformer's lead doesn't depend on it.** On held-out clips alone it scores 14.2%, against 19.2% for Omnilingual and 26.4% for Whisper.
+- **This check is blind to training on the main Vaani release**, which holds train, validation and test clips alike. Vaani-Benchmark-V1.0 isn't: it was published in June 2026, after IndicConformer's release in March 2025, and isn't in either repository. Its Hindi set has 5,050 segments from 1,062 speakers in 102 districts (10.9 hours). Running all three models on it and comparing each model's benchmark WER with its M0 WER would settle contamination. Its three independent transcriptions per segment would also show how much transcribers disagree in each district, without a listener.
+
+**Still open for M0:** the listening audit, which has 300 clips picked and its scoring ready (`audit/audit.py score`) but needs a Hindi-speaking listener. Also open: the three models on Vaani-Benchmark-V1.0's Hindi set, which needs a Kaggle run.

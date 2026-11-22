@@ -108,7 +108,8 @@ def _rows(path, size, columns, groups=None, rows=None):
     starts = list(accumulate((md.row_group(g).num_rows for g in range(md.num_row_groups)), initial=0))
     if rows is not None:
         groups = sorted({bisect.bisect_right(starts, r) - 1 for r in rows})
-    leaves = [i for i in range(md.num_columns) if md.schema.column(i).path.split(".")[0] in columns]
+    # A column is named by its top-level field ("audio") or by one leaf ("audio.path", without the bytes).
+    leaves = [i for i in range(md.num_columns) if {(p := md.schema.column(i).path), p.split(".")[0]} & set(columns)]
     chunks = [(size - len(tail), tail)]
     for g in groups:
         cols = [md.row_group(g).column(i) for i in leaves]
