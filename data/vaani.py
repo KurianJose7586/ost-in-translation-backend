@@ -215,10 +215,15 @@ def cut(index_path, districts, out, per_district, seed):
 
 
 def fetch(manifest, out_dir):
+    global REPO
     out = Path(out_dir).resolve()
     (out / "audio").mkdir(parents=True, exist_ok=True)
     with open(manifest, encoding="utf-8") as f:
         rows = [json.loads(line) for line in f]
+    # M1 manifests name their repository (Vaani-transcription-part, which has no speakerID column); M0's is REPO.
+    repos = {r["source"].get("repo", REPO) for r in rows}
+    assert len(repos) == 1, f"a manifest must come from one repository, not {repos}"
+    REPO = repos.pop()
     # Resume: clips already on disk from an earlier, interrupted run are kept, not fetched again.
     saved = {p.stem: p for p in (out / "audio").iterdir() if p.suffix != ".part"}
     by_file = defaultdict(dict)
@@ -231,9 +236,9 @@ def fetch(manifest, out_dir):
     sizes = {k: v for lang in {f.split("/")[1] for f in by_file} for k, v in _sizes(lang).items()}
 
     def one(path):
-        for a in _rows(path, sizes[path], ["audio", "speakerID"], rows=set(by_file[path])):
+        for a in _rows(path, sizes[path], ["audio", "transcript"], rows=set(by_file[path])):
             r = by_file[path][a["row"]]
-            assert _speaker(a["speakerID"]) == r["speaker"], f"row mismatch for {r['id']}"
+            assert a["transcript"] == r["text"], f"row mismatch for {r['id']}"
             dest = out / "audio" / (r["id"] + (Path(a["audio"]["path"] or "").suffix or ".wav"))
             part = dest.with_suffix(".part")  # a crash mid-write leaves a .part, never a half-written clip
             part.write_bytes(a["audio"]["bytes"])

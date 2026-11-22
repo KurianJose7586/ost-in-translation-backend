@@ -11,7 +11,7 @@ Intervals resample speakers within each side.
 
 Vaani's official train, validation and test split is in ARTPARK-IISc/Vaani-transcription-part
 (accept its terms first), not in ARTPARK-IISc/Vaani, where M0 was drawn. Clips are
-matched by audio file name, IISc_VaaniProject_{tag}_{state}_{district}_{speaker}_{image}_{start}_{end}.wav,
+matched by audio file name, IISc_VaaniProject_{tag}_{state}_{district}_{speaker}_{session}_{image}_{start}_{end}.wav,
 which both repositories share; the manifest's source row gives each clip's name.
 A clip missing from the split repository takes its speaker's split, since the
 split keeps each speaker in one split. Scanning the split repository reads the
@@ -29,7 +29,8 @@ from pathlib import Path
 import vaani
 
 MAIN, SPLITS = "ARTPARK-IISc/Vaani", "ARTPARK-IISc/Vaani-transcription-part"
-NAME = re.compile(r"IISc_VaaniProject_[A-Z]+_([A-Za-z]+)_([A-Za-z]+)_(.+?)_((?:[A-Za-z]+-SPECIFIC|GENERIC)_\d+)_\d+_\d+\.wav")
+# state, district, speaker, then the recording session, image, start and end (as in data/m1.py)
+NAME = re.compile(r"IISc_VaaniProject_[A-Z]+_([^_]+)_([^_]+)_([^_]+)_[^_]+_([^_]+-SPECIFIC_\d+|GENERIC_\d+)_\d+_\d+\.wav")
 
 
 def speaker(name):
