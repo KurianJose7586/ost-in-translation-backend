@@ -4,6 +4,10 @@ Newest first. Bigger planning decisions are in PLAN.md and FEASIBILITY.md, which
 
 | Date | Decision | Why |
 |---|---|---|
+| 22 Nov 2026 | Frozen test sets come from Vaani's official test split (`ARTPARK-IISc/Vaani-transcription-part`) | The plan asks for the official split. Clips with a known split also allow a train-versus-test contamination check |
+| 22 Nov 2026 | Targets against a baseline are relative (EXPECTED_RESULTS.md) | The best open model is at 10–16% WER on M0. Point targets written for about 35% would ask for near-perfect output |
+| 22 Nov 2026 | Digits and Latin-script English still count as errors | Under 3% of Whisper's M0 errors and none of the other models'. A fix means maintaining a lexicon |
+| 22 Nov 2026 | The audit corrects each district's full WER by the gap it measures, rather than rescoring the 30 audited clips | The gap varies far less than a 30-clip WER. In Dhar, IndicConformer's WER on 15 random clips was 2.7%, against 5.3% on the 116 they were drawn from |
 | 22 Nov 2026 | Listening audit: per district, 15 clips where all three models agree against the reference plus 15 random others, each tagged with its stratum's size | Suspects find reference errors fast; the random half and the stratum sizes let the error rate be weighted back to the whole district |
 | 21 Nov 2026 | Report lenient WER next to WER | About a third of a strong model's M0 errors were spelling-only (है/हैं, बहोत/बहुत). Any claim about Kaan must hold on both, because a model trained on Vaani learns Vaani's spellings |
 | 21 Nov 2026 | Runner scripts use Python 3.12, PyAV below 19, torchaudio 2.8 and pyarrow below 26 for Omnilingual, and their own CUDA 12 cuBLAS and cuDNN for Whisper | Each fixed a failure on Kaggle's Python 3.13 image |

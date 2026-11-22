@@ -14,7 +14,8 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
 | `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
 | `runners/kaggle_m0.sh` | Runs M0 end to end on a Kaggle GPU: fetch audio, three baselines, score |
-| `audit/` | The M0 listening audit: picks 30 clips per district and builds a page for checking their transcripts by ear |
+| `audit/` | The M0 listening audit: picks 30 clips per district, builds a page for checking their transcripts by ear, and scores what the listener sends back |
+| `notes/` | Decisions, results, and `m0_errors.tsv`: 50 errors per M0 model, sorted into the first error taxonomy |
 
 ## Formats
 
@@ -54,7 +55,11 @@ uv run --group data python data/vaani.py fetch data/manifests/m0_audit.jsonl run
 uv run python audit/audit.py page                                                         # runs/audit/index.html
 ```
 
-`runs/audit/` is then self-contained: zip it and send it to a Hindi-speaking listener, who opens `index.html` in a browser and sends back `m0_audit_results.jsonl`. Answers are kept in their browser between sessions.
+Zip `runs/audit/index.html` with `runs/audit/audio/` (not `manifest.jsonl`, which says which clips are suspects) and send it to a Hindi-speaking listener, who opens `index.html` in a browser and sends back `m0_audit_results.jsonl`. Answers are kept in their browser between sessions. Then:
+
+```sh
+uv run python audit/audit.py score m0_audit_results.jsonl   # reference WER per district, and each model's WER corrected for it
+```
 
 ## Rules
 

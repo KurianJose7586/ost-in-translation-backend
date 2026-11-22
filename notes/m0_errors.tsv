@@ -1,0 +1,151 @@
+model	n	id	district	op	ref	hyp	category	note
+whisper	1	e13bd7072d8a-GENERIC_0766-2	Dhar	S	फाइव	5	number	
+whisper	2	c188535b2ffc-Kabirdham-SPECIFIC_00053-1	Kabirdham	S	हैं	है	variant	
+whisper	3	11700d679adf-GENERIC_0635-1	Dhar	S	स्कैनर	स्केनर	spelling	
+whisper	4	21b331f50406-Lucknow-SPECIFIC_01837-6	Lucknow	S	हैं	हो	misheard	
+whisper	5	fb3a8529e999-Garhwa-SPECIFIC_00062-1	Garhwa	S	दीवार	दिवार	spelling	
+whisper	6	982e8faf6d30-Bikaner-SPECIFIC_02183-2	Bikaner	I		कपड़ा	disfluency	
+whisper	7	adfa553ee227-Bikaner-SPECIFIC_00876-1	Bikaner	S	दीवारों	दिवारों	spelling	
+whisper	8	a908d28fab8b-GENERIC_0673-3	Dhar	S	चित्र	चेत्र	spelling	
+whisper	9	9099b416fea7-Kabirdham-SPECIFIC_00783-1	Kabirdham	D	की		boundary	
+whisper	10	e5773b1b69e3-Lalitpur-SPECIFIC_00692-1	Lalitpur	S	पेय	पेजल	boundary	
+whisper	11	c1dac53c0bde-GENERIC_0104-3	Bikaner	S	हें	हैं	variant	
+whisper	12	a9e28c4e3217-Katni-SPECIFIC_01687-1	Katni	S	स्टार	star	latin	
+whisper	13	7378eda68c29-GENERIC_0120-2	Rohtak	S	भीड़	भीड	spelling	
+whisper	14	95e714e24247-GENERIC_0496-3	Garhwa	S	दीवार	दिवार	spelling	
+whisper	15	81d3d67dc83e-Bikaner-SPECIFIC_01971-3	Bikaner	S	मे	में	variant	
+whisper	16	4170163985ec-GENERIC_0489-1	WestChamparan	D	यहां		misheard	
+whisper	17	cccbed75b039-Lalitpur-SPECIFIC_01148-4	Lalitpur	D	हरी		disfluency	
+whisper	18	4170163985ec-GENERIC_0489-1	WestChamparan	S	भी	में	misheard	
+whisper	19	d0d72a1aa6f5-Kabirdham-SPECIFIC_00710-1	Kabirdham	S	रावट	टावर	reference	रावट makes no sense; पीछे टावर fits
+whisper	20	bf14c9b51976-Patna-SPECIFIC_01308-3	Patna	S	चढ़	चड़के	boundary	
+whisper	21	2c40ea1cbf71-Rohtak-SPECIFIC_00585-2	Rohtak	S	दो	102	number	
+whisper	22	36c5a4b4b417-GENERIC_0608-3	Kabirdham	S	रहे	रही	grammar	
+whisper	23	7f9998b7004e-Garhwa-SPECIFIC_00758-1	Garhwa	S	की	कि	variant	
+whisper	24	36ff18523e62-Bikaner-SPECIFIC_00414-4	Bikaner	S	बहोत	बहुत	variant	
+whisper	25	cc7e079a22d7-Kabirdham-SPECIFIC_00851-1	Kabirdham	S	छोटे	छटे	spelling	
+whisper	26	c1ea8e5be658-Rohtak-SPECIFIC_01868-3	Rohtak	S	का	करता	misheard	
+whisper	27	4170163985ec-WestChamparan-SPECIFIC_00607-3	WestChamparan	S	हैं	के	misheard	
+whisper	28	651fafd5f0db-GENERIC_0293-4	Lalitpur	S	हैंड	हेंड	spelling	
+whisper	29	6f4279921140-Patna-SPECIFIC_00586-4	Patna	S	आसपास	आजपास	misheard	
+whisper	30	a313f843c7e9-GENERIC_0506-1	Kabirdham	S	है	हैं	variant	
+whisper	31	61ea67f7fcaa-GENERIC_0268-4	Patna	S	येलो	यल्लो	spelling	
+whisper	32	bc864929414b-GENERIC_1204-1	Kabirdham	D	चित्र		misheard	
+whisper	33	0a0ee23d6c5f-GENERIC_0535-2	Lalitpur	S	छत	छट	misheard	
+whisper	34	87ebdc3a25f3-Bikaner-SPECIFIC_00794-2	Bikaner	S	घर	खड़	misheard	
+whisper	35	cda8a7bc6c8f-GENERIC_0352-1	Rohtak	I		है	misheard	
+whisper	36	bff990e12670-Patna-SPECIFIC_00843-1	Patna	S	घर	घड़	spelling	
+whisper	37	6c273578137b-Katni-SPECIFIC_01113-3	Katni	S	सेंटर	चेंटर	misheard	
+whisper	38	28db147fbd76-Dhar-SPECIFIC_01022-2	Dhar	S	आस	आसपास	boundary	
+whisper	39	f1a575380fd4-GENERIC_0059-1	Lalitpur	D	और		function	
+whisper	40	67211dad1b68-Rohtak-SPECIFIC_00750-4	Rohtak	S	मुंह	मुम्मी	misheard	
+whisper	41	e36b6fef808e-GENERIC_1065-1	Kabirdham	D	हैं		function	
+whisper	42	71267b55790d-GENERIC_1097-1	WestChamparan	S	इधर	इदर	spelling	
+whisper	43	17e976bd48bd-Rohtak-SPECIFIC_00143-1	Rohtak	S	हॉल	हाल	spelling	
+whisper	44	4dda44de52ac-Bikaner-SPECIFIC_01765-5	Bikaner	S	गुब्बारे	गुबारे	spelling	
+whisper	45	2aeec24baa34-Bikaner-SPECIFIC_00506-1	Bikaner	S	है	थी	misheard	
+whisper	46	1075e4bca760-Bikaner-SPECIFIC_00812-1	Bikaner	S	बच्चे	बच्ची	grammar	
+whisper	47	9532af85def6-GENERIC_0155-3	Garhwa	S	पैंट	पेंट	spelling	
+whisper	48	6c89a0276c2a-Patna-SPECIFIC_00496-4	Patna	D	एरिया		misheard	
+whisper	49	138aa984867d-Rohtak-SPECIFIC_01303-6	Rohtak	S	मैट	मैड	misheard	
+whisper	50	e99eecc950ef-GENERIC_0830-4	Lucknow	S	एक	कि	misheard	
+omnilingual	1	9197705e6582-Rohtak-SPECIFIC_00345-4	Rohtak	D	में		function	
+omnilingual	2	b4b1936dbb40-Rohtak-SPECIFIC_01746-1	Rohtak	S	यह	ये	variant	
+omnilingual	3	6c89a0276c2a-GENERIC_0601-4	Patna	S	टेप	लगावा	boundary	
+omnilingual	4	0ae867112463-GENERIC_1216-1	Katni	S	ये	यह	variant	
+omnilingual	5	d25a97380679-GENERIC_0727-1	Kabirdham	S	री	रही	dialect	
+omnilingual	6	bc864929414b-GENERIC_1284-1	Kabirdham	S	लाइटे	लाइटें	variant	
+omnilingual	7	89d152c419ec-Rohtak-SPECIFIC_01197-3	Rohtak	S	टंकी	रखी	misheard	
+omnilingual	8	898eb4673b9e-Dhar-SPECIFIC_01119-3	Dhar	S	रहें	रहे	variant	
+omnilingual	9	f04c478a0b9f-Kabirdham-SPECIFIC_00831-1	Kabirdham	D	है		function	
+omnilingual	10	3cf3d4f5d6df-Bikaner-SPECIFIC_01802-1	Bikaner	D	अर		disfluency	
+omnilingual	11	08a621ad6265-Lalitpur-SPECIFIC_00263-3	Lalitpur	S	है	हैं	variant	
+omnilingual	12	3c4c11dc4560-Kabirdham-SPECIFIC_00860-1	Kabirdham	S	है	हैं	variant	
+omnilingual	13	93ef9d7c21ff-GENERIC_1241-1	WestChamparan	S	पहना	पीना	dialect	speaker likely says पिन्हा (the reference has it later in the clip)
+omnilingual	14	4061bdb561ef-Dhar-SPECIFIC_00114-4	Dhar	S	है	हैं	variant	
+omnilingual	15	13c5513becef-GENERIC_0792-2	WestChamparan	S	जे	जहां	dialect	
+omnilingual	16	2e22d569d69b-GENERIC_0112-2	WestChamparan	S	ब्लू	बुल्लू	spelling	
+omnilingual	17	99cd9e5555a3-Katni-SPECIFIC_00685-6	Katni	S	ओर	दिए	misheard	
+omnilingual	18	de4903e8c7e9-GENERIC_0922-2	Kabirdham	S	जिसमे	जिसमें	variant	
+omnilingual	19	22912014d751-WestChamparan-SPECIFIC_00993-1	WestChamparan	S	टी	टीशर्ट	boundary	
+omnilingual	20	c8cd6a1a754c-Bikaner-SPECIFIC_01284-1	Bikaner	S	बिस्किट	बिस्कुट	spelling	
+omnilingual	21	b3dfac0f6167-GENERIC_1122-1	WestChamparan	D	कार्ड		boundary	
+omnilingual	22	bff990e12670-Patna-SPECIFIC_01278-1	Patna	S	नजर	नजेर	spelling	
+omnilingual	23	7547b31e7f6f-Bikaner-SPECIFIC_00346-2	Bikaner	S	ये	यह	variant	
+omnilingual	24	5f1a0810a6eb-Kabirdham-SPECIFIC_00791-1	Kabirdham	I		दे	function	
+omnilingual	25	9099b416fea7-Kabirdham-SPECIFIC_00046-2	Kabirdham	S	भी	पर	misheard	
+omnilingual	26	b3dfac0f6167-WestChamparan-SPECIFIC_01326-1	WestChamparan	S	डेक्शो	डेक्सों	spelling	
+omnilingual	27	a223c315d767-Bikaner-SPECIFIC_00729-3	Bikaner	S	दिखाई	दिखायते	misheard	
+omnilingual	28	67211dad1b68-GENERIC_0401-4	Rohtak	S	हुए	हैं	misheard	
+omnilingual	29	ad7de881379c-Bikaner-SPECIFIC_00031-2	Bikaner	D	है		function	
+omnilingual	30	42879b32f0cd-Lalitpur-SPECIFIC_00556-3	Lalitpur	S	हल्की	हल्के	grammar	
+omnilingual	31	ee33a692d3b9-GENERIC_1255-2	Kabirdham	S	पे	पर	variant	
+omnilingual	32	f04c478a0b9f-Kabirdham-SPECIFIC_00831-1	Kabirdham	S	बोहोत	बहुत	variant	
+omnilingual	33	2c40ea1cbf71-Rohtak-SPECIFIC_01543-4	Rohtak	S	लड़कीयां	लड़किया	spelling	
+omnilingual	34	1550508c4e49-GENERIC_0183-1	Kabirdham	S	सफेद	सपेत	misheard	
+omnilingual	35	1032501e1ca8-Katni-SPECIFIC_00185-2	Katni	S	पे	पर	variant	
+omnilingual	36	cfb288829f61-Patna-SPECIFIC_00106-1	Patna	S	नजर	निजर	spelling	
+omnilingual	37	ee33a692d3b9-GENERIC_1089-1	Kabirdham	S	बहोत	बहुत	variant	
+omnilingual	38	6e351673bb15-GENERIC_0279-5	Lucknow	S	दवाईयां	दवाइयां	spelling	
+omnilingual	39	2e22d569d69b-GENERIC_1280-1	WestChamparan	D	हुआ		misheard	
+omnilingual	40	0b70d05a9af5-GENERIC_0523-2	Rohtak	S	है	हैं	variant	
+omnilingual	41	c313471d05de-Lucknow-SPECIFIC_00437-3	Lucknow	S	केसरिया	किसरिया	spelling	
+omnilingual	42	9901f0744b91-GENERIC_0794-2	Kabirdham	S	की	लगा	misheard	
+omnilingual	43	09086ca96d1a-Bikaner-SPECIFIC_00041-5	Bikaner	S	साइड	शादी	misheard	
+omnilingual	44	6a95ebd8e3e7-Katni-SPECIFIC_00308-5	Katni	S	मुझे	पूछे	misheard	
+omnilingual	45	60ccbbe52eb4-GENERIC_0279-1	Bikaner	D	आया		misheard	
+omnilingual	46	cfb288829f61-GENERIC_1079-4	Patna	S	आ	और	misheard	
+omnilingual	47	c8d5a8f40f06-GENERIC_0419-2	Garhwa	I		भी	misheard	
+omnilingual	48	301eeab7a4e9-GENERIC_0127-1	Kabirdham	S	है	जो	boundary	
+omnilingual	49	8cd05ccdf624-GENERIC_0627-3	Lalitpur	D	फ्		disfluency	
+omnilingual	50	347449fb409e-GENERIC_1269-1	Lalitpur	S	वगैरा	वगैरह	spelling	
+indicconformer	1	b4b0984e3777-Katni-SPECIFIC_01882-2	Katni	S	वेयर	वियर	spelling	
+indicconformer	2	c6a458ac1c5f-GENERIC_0819-2	Kabirdham	S	बहोत	बहुत	variant	
+indicconformer	3	dde090d03f3c-Dhar-SPECIFIC_01727-1	Dhar	S	गोल	गोल्ड	reference	गोल्ड कलर fits, गोल कलर doesn't
+indicconformer	4	32aac2ccfc00-GENERIC_0997-4	Lucknow	S	ईसीई	ई	boundary	
+indicconformer	5	5e27059aac3b-Garhwa-SPECIFIC_01716-2	Garhwa	S	बहोत	बहुत	variant	
+indicconformer	6	d925a4e5f193-Bikaner-SPECIFIC_01784-1	Bikaner	S	हैं	है	variant	
+indicconformer	7	8456d9271182-Bikaner-SPECIFIC_00499-2	Bikaner	S	ढाबा	डब्बा	misheard	
+indicconformer	8	845c6ea7fa11-Dhar-SPECIFIC_01902-1	Dhar	S	लायब्रेरी	लाइब्रेरी	spelling	
+indicconformer	9	bad5d8592245-Kabirdham-SPECIFIC_00598-2	Kabirdham	S	बहुत	लंबी	disfluency	
+indicconformer	10	8ab786b100ef-Lalitpur-SPECIFIC_01446-2	Lalitpur	S	और	हर	misheard	
+indicconformer	11	3b73420c29e6-Bikaner-SPECIFIC_00093-2	Bikaner	S	पोधै	पौधे	spelling	typo in the reference
+indicconformer	12	c312ce879ca5-Katni-SPECIFIC_00573-2	Katni	S	मिलो	लोग	misheard	
+indicconformer	13	89d152c419ec-GENERIC_1135-2	Rohtak	I		ये	boundary	reference lacks a space (येबहोत)
+indicconformer	14	55dc141a0e32-GENERIC_0704-2	WestChamparan	S	येलोविश	येलोइ	misheard	
+indicconformer	15	3e9b31c2f2b1-Bikaner-SPECIFIC_00399-1	Bikaner	D	ये		function	
+indicconformer	16	22553eef4db5-WestChamparan-SPECIFIC_00889-1	WestChamparan	S	कबर्ड	कबड़े	spelling	
+indicconformer	17	65d5b105d58a-Garhwa-SPECIFIC_00819-1	Garhwa	S	पार	पर	misheard	
+indicconformer	18	b3dfac0f6167-GENERIC_1122-1	WestChamparan	D	हैं		function	
+indicconformer	19	c6a458ac1c5f-GENERIC_0758-1	Kabirdham	S	यहांं	यहां	variant	
+indicconformer	20	cfb288829f61-GENERIC_0082-5	Patna	S	लगे	है	grammar	
+indicconformer	21	c1ea8e5be658-GENERIC_1120-3	Rohtak	S	कि	देखने	misheard	
+indicconformer	22	9099b416fea7-Kabirdham-SPECIFIC_00859-1	Kabirdham	S	कल	काले	reference	कल कलर looks like a typo for काला/काले
+indicconformer	23	11f86b75a38d-GENERIC_0547-3	Garhwa	S	पत्थल	पत्थर	dialect	पत्थल is the eastern spoken form
+indicconformer	24	77ea3c5b48f0-GENERIC_1121-3	Bikaner	S	जोकि	कि	boundary	
+indicconformer	25	105a1a081452-Kabirdham-SPECIFIC_00311-2	Kabirdham	S	पक्षी	पक्षिया	grammar	
+indicconformer	26	655b79bd377a-Kabirdham-SPECIFIC_00244-2	Kabirdham	D	है		function	
+indicconformer	27	62ebe3e900e2-Rohtak-SPECIFIC_01499-3	Rohtak	S	एसी	सी	boundary	
+indicconformer	28	4170163985ec-WestChamparan-SPECIFIC_01342-2	WestChamparan	S	हैं	है	variant	
+indicconformer	29	5f6fd3390dea-Lalitpur-SPECIFIC_01117-1	Lalitpur	S	ए	ये	dialect	ए is the Bundeli demonstrative
+indicconformer	30	bf14c9b51976-GENERIC_1236-1	Patna	S	ट्रैफिक	ट्राफिक	spelling	
+indicconformer	31	3c4c11dc4560-Kabirdham-SPECIFIC_00089-1	Kabirdham	S	मे	है	misheard	
+indicconformer	32	8bb8dba96087-Patna-SPECIFIC_00448-1	Patna	S	कि	की	variant	
+indicconformer	33	f04c478a0b9f-GENERIC_0294-1	Kabirdham	S	स्टेज	स्टेट	misheard	
+indicconformer	34	f1a575380fd4-Lalitpur-SPECIFIC_01846-2	Lalitpur	I		वाली	reference	model has बेचने वाली; reference may have dropped it
+indicconformer	35	3f9355a86765-GENERIC_0358-3	Bikaner	D	पोज		misheard	
+indicconformer	36	138aa984867d-Rohtak-SPECIFIC_01303-6	Rohtak	I		जनता	misheard	
+indicconformer	37	a91605c7c387-GENERIC_0923-2	Patna	S	से	ऐसे	misheard	
+indicconformer	38	c312ce879ca5-Katni-SPECIFIC_00162-1	Katni	S	है	हूं	grammar	
+indicconformer	39	81d8cf544a50-Dhar-SPECIFIC_00710-3	Dhar	S	बीएमई	ई	boundary	
+indicconformer	40	e5773b1b69e3-Lalitpur-SPECIFIC_00692-1	Lalitpur	S	वॉश	बास	misheard	
+indicconformer	41	b4b1936dbb40-Rohtak-SPECIFIC_00057-3	Rohtak	S	हैं	है	variant	
+indicconformer	42	23c0b7e4cdc9-Rohtak-SPECIFIC_00548-2	Rohtak	I		एम	boundary	
+indicconformer	43	fe6e3e691cbb-WestChamparan-SPECIFIC_00305-1	WestChamparan	I		जी	boundary	
+indicconformer	44	9197705e6582-Rohtak-SPECIFIC_00920-1	Rohtak	S	एक	बहुत	function	
+indicconformer	45	3b73420c29e6-Bikaner-SPECIFIC_00966-3	Bikaner	S	बॉक्स	बॉक्सेस	boundary	
+indicconformer	46	11700d679adf-GENERIC_1049-4	Dhar	S	है	से	misheard	
+indicconformer	47	c539fbbbcd6a-Bikaner-SPECIFIC_01721-2	Bikaner	S	वाइट	व्हाइट	variant	
+indicconformer	48	5e27059aac3b-Garhwa-SPECIFIC_00904-2	Garhwa	D	राज		boundary	
+indicconformer	49	dcbd122fd5de-Patna-SPECIFIC_01060-1	Patna	S	मे	अ	disfluency	
+indicconformer	50	28a00ee58ac0-GENERIC_0725-2	Kabirdham	S	जाते	जाती	grammar	

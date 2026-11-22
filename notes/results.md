@@ -60,4 +60,39 @@ The label audit still has to confirm it.
 - **The best open model is already at 10–16% WER.** Absolute-point targets for Kaan won't work, so convert them to relative ones at the M0 revision (see EXPECTED_RESULTS.md).
 - **Dialect replacement (E3) has too little data here.** Vaani glossed only 91 dialect words with their standard Hindi in this slice. E3 needs the planned hand-labelled errors.
 
-**Still open for M0:** the listening audit (300 clips picked in `data/manifests/m0_audit.jsonl`; needs a Hindi-speaking listener), 50 errors per model read for the taxonomy, and IndicConformer's training data.
+**Error taxonomy.** A random 50 of each model's word errors (strict WER), read as text without the audio, so what was said is a judgement from context. Every one is in `notes/m0_errors.tsv`, with its clip.
+
+| Kind | Whisper | Omnilingual | IndicConformer |
+|---|---|---|---|
+| Misheard: a different word, or garbled | 16 | 13 | 13 |
+| Spelling variant that lenient WER forgives (है/हैं, बहोत/बहुत, ये/यह) | 6 | 14 | 8 |
+| Other spelling of the same word (दीवार/दिवार, वगैरा/वगैरह) | 14 | 9 | 5 |
+| Word boundary: joined or split words, acronyms letter by letter | 4 | 4 | 9 |
+| Short word dropped or added (है, में, और) | 2 | 4 | 4 |
+| Grammatical ending (रहे/रही, बच्चे/बच्ची) | 2 | 1 | 4 |
+| Disfluency: a repeat, filler or cut-off word | 2 | 2 | 2 |
+| Dialect form written as standard Hindi | 0 | 3 | 2 |
+| Number in digits | 2 | 0 | 0 |
+| English in Latin script | 1 | 0 | 0 |
+| Reference probably wrong | 1 | 0 | 3 |
+
+- **Only a quarter to a third of errors are plain mishearing.** The rest are mostly about writing: spelling accounts for 20, 23 and 13 of 50, word boundaries for 4, 4 and 9.
+- **IndicConformer's boundary errors are mostly acronyms.** It writes ई सी ई where Vaani writes ईसीई, and डी ए एम सी for डीएमसी; the rest are compounds such as जो कि and जोकि. A lenient rule that joins runs of single letters would take most of these. It would change published numbers, so decide it together with the audit's spelling findings.
+- **Whisper's spelling errors are near misses that lenient WER doesn't cover**: दीवार→दिवार three times in 50, plus vowel length, aspiration and doubled consonants.
+- **Dialect forms are 5 of 150 errors**: री→रही, जे→जहां, पत्थल→पत्थर, ए→ये, and पीना for a spoken पिन्हा. That is far below E3's "more than a quarter". But text can't show dialect that Vaani's transcribers already wrote as standard Hindi. In one West Champaran clip the reference has पहना where the speaker seems to say पिन्हा, so E3 needs the audio.
+- **The reference looks wrong in 4 of 150**: रावट for टावर, गोल for गोल्ड, कल for काले, and a phrase the reference seems to drop. The audit measures this properly.
+- **Digits and Latin script are rare.** They make up 0.4% and 2.9% of all Whisper's errors, and none of the other two models'. The normaliser leaves both as errors.
+
+**Contamination and Vaani's official split** (sources checked 22 Nov 2026):
+
+- **No source lists Vaani in IndicConformer's training data, and none rules it out.**
+  - The 600M model card says only that it covers 22 languages, and its metadata names no datasets. AI4Bharat's GitHub and AIKosh name none either.
+  - Shaip, one of Vaani's three transcription vendors, also worked on IndicVoices.
+  - On Vaani-Benchmark-V1.0 (a separate held-out set of 5,050 Hindi segments, each transcribed three times), IndicConformer's published Hindi WER is 13.2. That is close to its 13.3% here. It's weak evidence against a large effect, since the clips and the normalisation differ.
+- **Vaani has an official split, in a different repository from the one M0 used.** `ARTPARK-IISc/Vaani-transcription-part` has train, validation and test for Hindi (177, 52 and 52 files, 115 GB). Vaani's paper (arXiv 2603.28714) describes 80/10/10 within each district, with no speaker in two splits. M0 sampled from `ARTPARK-IISc/Vaani`, which has only `train`.
+  - The repository is gated, and this account hasn't accepted its terms yet.
+  - Once accepted, M1 draws its frozen test sets from the test split.
+  - It also allows a contamination test: compare each model's WER on clips from the official train and test splits. A model that trained on the train split does better there, and the other models shouldn't.
+- **How Vaani was transcribed.** The vendors were Shaip, Megdap and Karya, using guidelines adapted from Bhashini, with transcribers from the same district. A language expert reviews each batch against a 10% issue threshold. No accuracy figure is published.
+
+**Still open for M0:** the listening audit, which has 300 clips picked and its scoring ready (`audit/audit.py score`) but needs a Hindi-speaking listener. Also open: accepting the Vaani-transcription-part terms, and then the train-versus-test contamination check.
