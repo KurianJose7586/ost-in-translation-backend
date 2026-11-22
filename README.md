@@ -17,6 +17,7 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
 | `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
 | `runners/kaggle_m0.sh` | Runs M0 end to end on a Kaggle GPU: fetch audio, three baselines, score |
+| `runners/kaggle_m1.sh` | Runs every M1 test set on Kaggle as a chain of 10-hour runs, each continuing from the last one's transcripts; instructions at its top |
 | `runners/kaggle_bench.sh` | The same for Vaani-Benchmark-V1.0's Hindi set; then `uv run python data/benchmark.py score runs/bench/manifest.jsonl runs/bench/*.jsonl --m0 runs/m0` compares it with M0 |
 | `audit/` | The M0 listening audit: picks 30 clips per district, builds a page for checking their transcripts by ear, and scores what the listener sends back |
 | `notes/` | Decisions, results, and `m0_errors.tsv`: 50 errors per M0 model, sorted into the first error taxonomy |
