@@ -95,6 +95,11 @@ def pool(stats):
         s["wer_pooled"] = p
 
 
+def spaced(s):
+    """Vaani writes place names in CamelCase (WestChamparan); the site shows West Champaran."""
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", s)
+
+
 def build(clips, hyps, round_name="baseline"):
     """clips: id -> manifest row. hyps: model -> id -> hypothesis (None = unsupported)."""
     rng = np.random.default_rng(0)
@@ -110,8 +115,8 @@ def build(clips, hyps, round_name="baseline"):
         langs = Counter(clips[i]["language"] for i in ids)
         d = {
             "id": re.sub(r"[^a-z0-9]+", "-", f"{state}-{name}".lower()).strip("-"),
-            "name": name,
-            "state": state,
+            "name": spaced(name),
+            "state": spaced(state),
             "languages": {lang: n / len(ids) for lang, n in langs.most_common()},
             "results": {},
         }
