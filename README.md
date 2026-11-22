@@ -14,6 +14,7 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
 | `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
 | `runners/kaggle_m0.sh` | Runs M0 end to end on a Kaggle GPU: fetch audio, three baselines, score |
+| `audit/` | The M0 listening audit: picks 30 clips per district and builds a page for checking their transcripts by ear |
 
 ## Formats
 
@@ -43,6 +44,17 @@ uv run --group data python data/vaani.py slice runs/vaani/Hindi.json data/m0_dis
 ```
 
 The slice is committed, so you don't need to rebuild it. Manifests contain transcripts from [Vaani](https://vaani.iisc.ac.in) by IISc and ARTPARK (CC BY 4.0); speaker IDs are replaced by hashes, because some embed fragments of names. The baselines run on Kaggle; the instructions are at the top of `runners/kaggle_m0.sh`.
+
+## M0 listening audit
+
+Checks whether a district's high WER comes from its speakers or from its transcripts. `data/manifests/m0_audit.jsonl` holds 30 clips per district: up to 15 where all three models agree on a word the reference doesn't have, and the rest at random. It needs the three M0 transcript files in `runs/m0/`.
+
+```sh
+uv run --group data python data/vaani.py fetch data/manifests/m0_audit.jsonl runs/audit   # ~3.5 GB read, ~75 MB kept
+uv run python audit/audit.py page                                                         # runs/audit/index.html
+```
+
+`runs/audit/` is then self-contained: zip it and send it to a Hindi-speaking listener, who opens `index.html` in a browser and sends back `m0_audit_results.jsonl`. Answers are kept in their browser between sessions.
 
 ## Rules
 

@@ -1,0 +1,18 @@
+# Decisions
+
+Newest first. Bigger planning decisions are in PLAN.md and FEASIBILITY.md, which live outside this repository.
+
+| Date | Decision | Why |
+|---|---|---|
+| 22 Nov 2026 | Listening audit: per district, 15 clips where all three models agree against the reference plus 15 random others, each tagged with its stratum's size | Suspects find reference errors fast; the random half and the stratum sizes let the error rate be weighted back to the whole district |
+| 21 Nov 2026 | Report lenient WER next to WER | About a third of a strong model's M0 errors were spelling-only (है/हैं, बहोत/बहुत). Any claim about Kaan must hold on both, because a model trained on Vaani learns Vaani's spellings |
+| 21 Nov 2026 | Runner scripts use Python 3.12, PyAV below 19, torchaudio 2.8 and pyarrow below 26 for Omnilingual, and their own CUDA 12 cuBLAS and cuDNN for Whisper | Each fixed a failure on Kaggle's Python 3.13 image |
+| 21 Nov 2026 | Every step of a run resumes where it stopped | Kaggle sessions die; a rerun redoes only missing clips |
+| 21 Nov 2026 | Speaker IDs in published manifests are hashed | Some Vaani speaker IDs embed fragments of names |
+| 21 Nov 2026 | A clip id is speaker + image + utterance number | Vaani's utterance numbers restart for each image |
+| 21 Nov 2026 | Clips with speaker ID `NA` never enter a test set | Speaker-disjoint splits and speaker bootstrap need real IDs |
+| 21 Nov 2026 | Test slice: at most 8 clips per speaker, under 40 s, sampled from random row groups | Many speakers per district, and Omnilingual's 40-second limit |
+| 21 Nov 2026 | Read Vaani by file footer and row group, never whole files | Vaani Hindi alone is 5,620 files, and the Hub allows 5,000 requests per five minutes |
+| 21 Nov 2026 | M0 language is Hindi, in ten districts across five dialect regions | Hindi is the only Hindi-belt language with ten or more transcribed districts (113). Dialect labels are thin |
+| 21 Nov 2026 | Districts created since 2011 are drawn inside their 2011 parent polygon | The open boundary map is Census 2011 |
+| 21 Nov 2026 | Licences: Vaani and IndicVoices CC BY 4.0, FLEURS CC BY 4.0, DataMeet district boundaries CC BY 2.5 India, IndicConformer MIT | Checked on each dataset or model page |

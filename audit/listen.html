@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listening audit</title>
+<style>
+  :root { --bg: #fff; --fg: #1a1a1a; --muted: #666; --line: #ddd; --card: #f7f7f5; --mark: #ffe08a; --ok: #1f7a3d; --warn: #a15c00; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151515; --fg: #eee; --muted: #9a9a9a; --line: #333; --card: #1e1e1e; --mark: #6b5310; --ok: #6fd08f; --warn: #f0b35a; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  header { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; z-index: 1; }
+  header h1 { font-size: 1.1rem; margin: 0; flex: 1; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  details { margin-bottom: 16px; }
+  h2 { font-size: 1rem; margin: 32px 0 8px; }
+  .clip { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .clip.done { opacity: 0.6; }
+  .meta { color: var(--muted); font-size: 0.85rem; display: flex; justify-content: space-between; gap: 8px; }
+  audio { width: 100%; margin: 8px 0; }
+  .who { display: block; color: var(--muted); font-size: 0.8rem; }
+  p { margin: 6px 0; }
+  mark { background: var(--mark); color: inherit; border-radius: 2px; }
+  textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+  .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+  button { font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; }
+  button:hover { border-color: var(--fg); }
+  .status { font-size: 0.85rem; color: var(--ok); }
+  .status.unclear { color: var(--warn); }
+  .models { font-size: 0.9rem; }
+  .gone { text-decoration: line-through; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Listening audit</h1>
+  <span id="progress"></span>
+  <button id="export">Download results</button>
+</header>
+<main>
+  <details open>
+    <summary>How to do this</summary>
+    <p>Each clip is someone in one district describing a picture in Hindi. Play it, then make the box say exactly what you hear: fix wrong words, delete words that weren't said, add words that were. Keep their dialect and grammar as spoken; don't correct it to standard Hindi. Spelling doesn't matter much.</p>
+    <p>The highlighted words in Vaani's transcript are ones where all three models agreed on something else. The models are often wrong too, so trust your ears, not them.</p>
+    <p>Press <strong>Save</strong> when the box is right (even if you changed nothing). Press <strong>Can't tell</strong> if the audio is too unclear to decide. Your answers stay in this browser; press <strong>Download results</strong> now and then, and send the file back when you're done.</p>
+  </details>
+  <div id="clips"></div>
+</main>
+<script id="data" type="application/json">__CLIPS__</script>
+<script>
+const clips = JSON.parse(document.getElementById("data").textContent);
+const KEY = "lit-audit-m0";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
+const store = () => {
+  try { localStorage.setItem(KEY, JSON.stringify(saved)); }
+  catch { alert("This browser won't keep your answers. Press Download results before closing it."); }
+};
+
+// Data strings always become text nodes, never HTML.
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  el.append(...kids.flat(Infinity).filter((k) => k != null));
+  return el;
+}
+
+const progress = document.getElementById("progress");
+const tally = () => (progress.textContent = `${Object.keys(saved).length} of ${clips.length} done`);
+
+function card(c, i, n) {
+  const box = h("textarea", { rows: 3, lang: "hi" });
+  box.value = saved[c.id]?.text ?? c.ref;
+  const status = h("span", { class: "status" });
+  const section = h("section", { class: "clip" });
+  const show = () => {
+    const s = saved[c.id];
+    section.classList.toggle("done", !!s);
+    status.className = `status${s?.unclear ? " unclear" : ""}`;
+    status.textContent = !s ? "" : s.unclear ? "Can't tell" : s.text === c.ref ? "Saved: transcript is right" : "Saved: corrected";
+  };
+  const save = (unclear) => {
+    saved[c.id] = { text: box.value.split(/\s+/).filter(Boolean).join(" "), unclear };
+    store(); show(); tally();
+  };
+  const ref = c.ref.split(" ");
+  const wrong = new Set(c.disputed); // positions where all three models wrote the same other word, or all dropped it
+  section.append(
+    h("div", { class: "meta" }, h("span", {}, `${c.district}, ${i} of ${n}`), status),
+    h("audio", { controls: "", preload: "none", src: c.audio }),
+    h("p", { lang: "hi" }, h("span", { class: "who" }, "Vaani's transcript"), ref.map((w, p) => [wrong.has(p) ? h("mark", {}, w) : w, " "])),
+    h("label", {}, h("span", { class: "who" }, "What you hear"), box),
+    h("div", { class: "row" },
+      h("button", { type: "button", "data-act": "save" }, "Save"),
+      h("button", { type: "button", "data-act": "unclear" }, "Can't tell"),
+    ),
+    h("details", { class: "models" }, h("summary", {}, "What the models heard"),
+      Object.entries(c.models).map(([m, rows]) => h("p", { lang: "hi" }, h("span", { class: "who" }, m),
+        rows.map(([op, r, w]) => [op === "C" ? w : op === "D" ? h("span", { class: "gone" }, r) : h("mark", {}, w), " "])))),
+  );
+  section.addEventListener("click", (e) => {
+    const act = e.target.dataset?.act;
+    if (act) save(act === "unclear");
+  });
+  show();
+  return section;
+}
+
+const list = document.getElementById("clips");
+const counts = {};
+for (const c of clips) counts[c.district] = (counts[c.district] ?? 0) + 1;
+let last = null, i = 0;
+for (const c of clips) {
+  if (c.district !== last) { list.append(h("h2", {}, `${c.district}, ${c.state}`)); last = c.district; i = 0; }
+  list.append(card(c, ++i, counts[c.district]));
+}
+tally();
+
+document.getElementById("export").addEventListener("click", () => {
+  const lines = clips.filter((c) => saved[c.id]).map((c) => JSON.stringify({ id: c.id, heard: saved[c.id].text, unclear: saved[c.id].unclear, reference: c.ref }));
+  const a = h("a", { href: URL.createObjectURL(new Blob([lines.join("\n") + "\n"], { type: "application/json" })), download: "m0_audit_results.jsonl" });
+  a.click();
+});
+</script>
+</body>
+</html>
