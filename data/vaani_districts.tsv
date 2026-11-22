@@ -1,5 +1,6 @@
 state	district	map	how	note
 AndhraPradesh	Anantpur	andhra-pradesh-anantapur	fuzzy	
+AndhraPradesh	Annamaya	andhra-pradesh-y-s-r	manual	created 2022 from YSR Kadapa and Chittoor; drawn in Kadapa, which held its headquarters, Rayachoti
 AndhraPradesh	Chittoor	andhra-pradesh-chittoor	exact	
 AndhraPradesh	Guntur	andhra-pradesh-guntur	exact	
 AndhraPradesh	Krishna	andhra-pradesh-krishna	exact	
@@ -12,6 +13,7 @@ ArunachalPradesh	LowerDibangvalley	arunanchal-pradesh-lower-dibang-valley	manual
 ArunachalPradesh	PapumPare	arunanchal-pradesh-papum-pare	manual	
 Assam	Hailakandi	assam-hailakandi	exact	
 Assam	KamrupMetropolitan	assam-kamrup-metropolitan	exact	
+Assam	KarbiAnglong	assam-karbi-anglong	exact	
 Assam	Sonitpur	assam-sonitpur	exact	
 Bihar	Araria	bihar-araria	exact	
 Bihar	Begusarai	bihar-begusarai	exact	
@@ -81,6 +83,11 @@ Karnataka	Koppal	karnataka-koppal	exact
 Karnataka	Mysore	karnataka-mysore	exact	
 Karnataka	Raichur	karnataka-raichur	exact	
 Karnataka	Shimoga	karnataka-shimoga	exact	
+Kerala	Kasaragod	kerala-kasaragod	exact	
+Kerala	Kollam	kerala-kollam	exact	
+Kerala	Kozhikode	kerala-kozhikode	exact	
+Kerala	Thiruvananthapuram	kerala-thiruvananthapuram	exact	
+Kerala	Wayanad	kerala-wayanad	exact	
 MadhyaPradesh	Bhopal	madhya-pradesh-bhopal	exact	
 MadhyaPradesh	Dhar	madhya-pradesh-dhar	exact	
 MadhyaPradesh	Katni	madhya-pradesh-katni	exact	
@@ -96,6 +103,8 @@ Maharashtra	Sindhudurg	maharashtra-sindhudurg	exact
 Maharashtra	Solapur	maharashtra-solapur	exact	
 Maharashtra	Washim	maharashtra-washim	exact	
 Manipur	ImphalWest	manipur-imphal-west	exact	
+Meghalaya	NorthGaroHills	meghalaya-east-garo-hills	manual	created 2012 from East Garo Hills
+Meghalaya	SouthGarohills	meghalaya-south-garo-hills	exact	
 Meghalaya	WestGaroHills	meghalaya-west-garo-hills	exact	
 Mizoram	Aizawl	mizoram-aizawl	exact	
 Nagaland	Dimapur	nagaland-dimapur	exact	
@@ -114,11 +123,18 @@ Rajasthan	Jaipur	rajasthan-jaipur	exact
 Rajasthan	Jaisalmer	rajasthan-jaisalmer	exact	
 Rajasthan	Nagaur	rajasthan-nagaur	exact	
 Sikkim	Gangtok	sikkim-east	manual	Gangtok is East Sikkim's headquarters
+TamilNadu	Chennai	tamil-nadu-chennai	exact	
+TamilNadu	Kanyakumari	tamil-nadu-kanniyakumari	fuzzy	
+TamilNadu	Namakkal	tamil-nadu-namakkal	exact	
+TamilNadu	Nilgiris	tamil-nadu-the-nilgiris	fuzzy	
 Telangana	Adilabad	andhra-pradesh-adilabad	exact	
 Telangana	Hyderabad	andhra-pradesh-hyderabad	exact	
 Telangana	Karimnagar	andhra-pradesh-karimnagar	exact	
+Telangana	KomaramBheem	andhra-pradesh-adilabad	manual	created 2016 from Adilabad
+Telangana	Mahabubabad	andhra-pradesh-warangal	manual	created 2016, mostly from Warangal
 Telangana	Nalgonda	andhra-pradesh-nalgonda	exact	
 Tripura	Dhalai	tripura-dhalai	exact	
+Tripura	SouthTripura	tripura-south-tripura	exact	
 Tripura	Unakoti	tripura-north-tripura	manual	created 2012 from North Tripura
 Tripura	WestTripura	tripura-west-tripura	exact	
 UttarPradesh	Budaun	uttar-pradesh-budaun	exact	
