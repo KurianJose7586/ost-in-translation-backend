@@ -12,6 +12,7 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `data/fleurs.py` | Builds a small FLEURS Hindi manifest for smoke tests |
 | `data/vaani.py` | Indexes Vaani's files, cuts a test slice, and fetches the slice's audio. It reads only footers and the row groups it needs, because Vaani is tens of terabytes and the Hub allows 5,000 requests per five minutes |
 | `data/splits.py` | Matches a manifest's clips to Vaani's official train, validation and test split (in `ARTPARK-IISc/Vaani-transcription-part`), and compares each model on train against held-out clips as a contamination check |
+| `data/m1.py` | Surveys Vaani's official test split in every language, checks its images against train, and drafts the M1 test sets (`data/m1_test_survey.tsv`, `data/manifests/m1_{language}.jsonl`) |
 | `data/benchmark.py` | Fetches a language of Vaani-Benchmark-V1.0 (held out, three transcriptions per segment) as a manifest, and scores it: the benchmark's own WER, our WER, transcriber disagreement per district, and, against M0, a contamination check |
 | `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
 | `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
@@ -63,6 +64,18 @@ Zip `runs/audit/index.html` with `runs/audit/audio/` (not `manifest.jsonl`, whic
 ```sh
 uv run python audit/audit.py score m0_audit_results.jsonl   # reference WER per district, and each model's WER corrected for it
 ```
+
+## M1 test sets
+
+Drafts from Vaani's official test split, not frozen yet. Accept the terms of `ARTPARK-IISc/Vaani-transcription-part` first. Raw rows, which hold unhashed speaker IDs, are cached in `runs/vaani/`.
+
+```sh
+uv run --group data python data/m1.py survey -o data/m1_test_survey.tsv          # ~10 min the first time
+uv run --group data python data/m1.py images Hindi Bengali                         # test images also in train
+uv run --group data python data/m1.py slice Hindi -o data/manifests/m1_hindi.jsonl # one per language; prints its SHA-256
+```
+
+`vaani.py fetch` reads them from the repository named in each clip's `source.repo`.
 
 ## Rules
 

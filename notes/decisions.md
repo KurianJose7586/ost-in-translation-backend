@@ -4,6 +4,10 @@ Newest first. Bigger planning decisions are in PLAN.md and FEASIBILITY.md, which
 
 | Date | Decision | Why |
 |---|---|---|
+| 23 Nov 2026 | *Open:* whether M1 test sets must be disjoint from Vaani's train split by image. Either drop test clips whose image is in train, or keep them and exclude the frozen test sets' images from Kaan's training data | The official split keeps speakers apart but not images: 80% of the Hindi draft's clips share an image with train. Dropping them leaves 67 Hindi districts with 100 clips, against 93 |
+| 23 Nov 2026 | M1 test sets take at most 4 clips per speaker, not M0's 8 | The official test split holds every clip of a speaker, so 8 leaves a median of 27 speakers per Hindi district. 4 gives 42, for 93 qualifying districts instead of 99 |
+| 23 Nov 2026 | A speaker is Vaani's speakerID, rebuilt from the audio file name: the state's and district's first two letters, then the name's speaker part (Patna: `BIPA_…`). The part after it is a recording session | The split repository has no speakerID column. The rule reproduces all 793 M0 speaker hashes; counting speaker and session together would give 102,825 Hindi test speakers instead of 11,481 |
+| 23 Nov 2026 | An M1 clip id is speaker + image + start time in ms | The split repository has no utterance number |
 | 22 Nov 2026 | Frozen test sets come from Vaani's official test split (`ARTPARK-IISc/Vaani-transcription-part`) | The plan asks for the official split. Clips with a known split also allow a train-versus-test contamination check |
 | 22 Nov 2026 | Targets against a baseline are relative (EXPECTED_RESULTS.md) | The best open model is at 10–16% WER on M0. Point targets written for about 35% would ask for near-perfect output |
 | 22 Nov 2026 | Digits and Latin-script English still count as errors | Under 3% of Whisper's M0 errors and none of the other models'. A fix means maintaining a lexicon |

@@ -2,6 +2,32 @@
 
 Newest first. Every number here can be rebuilt with `atlas-eval` from the raw transcripts. Those live outside git, in `runs/`, until a round is frozen.
 
+## M1, 23 Nov 2026: test sets from Vaani's official split (drafts)
+
+**Setup.** `data/m1.py` reads every row of the test split in `ARTPARK-IISc/Vaani-transcription-part`, small columns only. 64 of its 90 languages have a test split; the other 26 have train only. The rules are M0's, with one change: a real speaker ID, under 40 s, a non-empty normalised transcript, no speaker in two districts, and at most 4 clips per speaker instead of 8 (see decisions.md). A district qualifies with 100 usable clips, and its draft takes 150 where it can. Counts for every language and district are in `data/m1_test_survey.tsv`. The drafts are `data/manifests/m1_{language}.jsonl`, not frozen yet.
+
+| Language | Districts in test split | Qualifying | Clips | Speakers | Hours |
+|---|---|---|---|---|---|
+| Hindi | 130 | 93 | 13,877 | 3,936 | 24.7 |
+| Kannada | 14 | 13 | 1,973 | 546 | 3.9 |
+| Telugu | 23 | 13 | 1,963 | 537 | 3.5 |
+| Bengali | 34 | 12 | 1,816 | 514 | 2.9 |
+| Marathi | 24 | 8 | 1,212 | 344 | 2.1 |
+| Chhattisgarhi | 9 | 5 | 731 | 206 | 1.3 |
+| Bhojpuri | 14 | 5 | 706 | 216 | 1.4 |
+| Odia | 5 | 4 | 606 | 152 | 1.0 |
+| Maithili | 20 | 4 | 555 | 160 | 1.1 |
+| 21 more languages, 1–3 districts each | 101 | 35 | 4,931 | 1,292 | 7.4 |
+| **All 30** | **374** | **192** | **28,370** | **7,903** | **49.4** |
+
+**Findings:**
+
+- **The atlas can cover 149 of the test split's 162 districts** in at least one language. Hindi alone covers 93. Hindi was also recorded outside the Hindi belt, so its map includes districts such as Bangalore and Krishna.
+- **A Vaani speaker is the name's speaker part, not the speaker and session together.** The split repository has no speakerID column. The main repository's ID is the state's and district's first two letters plus the speaker part of the audio file name (Patna: `BIPA_…`). This reproduces all 793 M0 speaker hashes, so one person has the same hash in M0 and M1. Taking the following session part as well would count 102,825 speakers in Hindi's test split instead of 11,481.
+- **The official split keeps speakers apart, not images.** In Hindi, every generic test image and 73% of district-specific ones also appear in train. 80% of the Hindi draft's clips describe an image that train clips also describe. In the other large languages, 95–100% of generic-image clips and 20–79% of specific-image clips share their image with train. Dropping those clips would leave 67 Hindi districts with 100 clips, against 93. This is open (decisions.md).
+- **Every qualifying district is on the map.** `data/vaani_districts.tsv` gained 16 districts that only the split repository has, mostly in Kerala, Tamil Nadu and Telangana.
+- **22 M0 speakers are in the Hindi draft.** M0 drew from all three splits, so that is expected; M0 isn't training data.
+
 ## M0, 22 Nov 2026: three baselines
 
 **Setup.** Ten Hindi districts (`data/m0_districts.tsv`), 1,511 clips from 793 speakers (`data/manifests/m0.jsonl`), run on a Kaggle T4. Models: Whisper-large-v3 (faster-whisper), Omnilingual ASR `omniASR_LLM_3B_v2` with a Hindi hint, and IndicConformer 600M. WER uses `normalise()`, and lenient WER uses `lenient()`. Intervals are 95%, from 1,000 speaker resamples. Rows are ordered by the best model's WER, worst first.
