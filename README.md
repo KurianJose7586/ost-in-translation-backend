@@ -12,9 +12,11 @@ Evaluation, data and (later) training code for [Lost in Transcription](https://g
 | `data/fleurs.py` | Builds a small FLEURS Hindi manifest for smoke tests |
 | `data/vaani.py` | Indexes Vaani's files, cuts a test slice, and fetches the slice's audio. It reads only footers and the row groups it needs, because Vaani is tens of terabytes and the Hub allows 5,000 requests per five minutes |
 | `data/splits.py` | Matches a manifest's clips to Vaani's official train, validation and test split (in `ARTPARK-IISc/Vaani-transcription-part`), and compares each model on train against held-out clips as a contamination check |
+| `data/benchmark.py` | Fetches a language of Vaani-Benchmark-V1.0 (held out, three transcriptions per segment) as a manifest, and scores it: the benchmark's own WER, our WER, transcriber disagreement per district, and, against M0, a contamination check |
 | `data/vaani_districts.tsv` | Each Vaani district's polygons on the 2011 map; districts created since 2011 point to their parent |
 | `data/m0_districts.tsv`, `data/manifests/m0.jsonl` | The ten M0 districts and their frozen test slice (no audio) |
 | `runners/kaggle_m0.sh` | Runs M0 end to end on a Kaggle GPU: fetch audio, three baselines, score |
+| `runners/kaggle_bench.sh` | The same for Vaani-Benchmark-V1.0's Hindi set; then `uv run python data/benchmark.py score runs/bench/manifest.jsonl runs/bench/*.jsonl --m0 runs/m0` compares it with M0 |
 | `audit/` | The M0 listening audit: picks 30 clips per district, builds a page for checking their transcripts by ear, and scores what the listener sends back |
 | `notes/` | Decisions, results, and `m0_errors.tsv`: 50 errors per M0 model, sorted into the first error taxonomy |
 
