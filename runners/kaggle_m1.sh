@@ -12,7 +12,8 @@
 # Repeat until the last lines show every model at all clips. Download runs/m1.zip each time.
 #
 # IndicConformer runs on the CPU alongside the GPU models at the lowest priority, so its
-# threads take only CPU time the others leave idle.
+# threads take only CPU time the others leave idle. With accelerator "None", only IndicConformer
+# runs, and the run uses none of the weekly GPU hours.
 set -uo pipefail
 pip install -q uv
 uv sync -q --group data
@@ -32,13 +33,14 @@ left() { n=$(( END - $(date +%s) )); echo $(( n > 1 ? n : 1 )); }  # timeout 0 w
 whisper() { CUDA_VISIBLE_DEVICES=$1 timeout "$(left)" uv run runners/whisper.py $M $D/whisper.jsonl --device cuda || echo "whisper stopped"; }
 omni() { CUDA_VISIBLE_DEVICES=$1 timeout "$(left)" uv run runners/omnilingual.py $M $D/omnilingual.jsonl --model omniASR_LLM_3B_v2 || echo "omnilingual stopped"; }
 (timeout "$(left)" nice -n 19 uv run runners/indicconformer.py $M $D/indicconformer.jsonl || echo "indicconformer stopped") &
-if [ "$(nvidia-smi -L | wc -l)" -ge 2 ]; then
+gpus=$(nvidia-smi -L 2>/dev/null | wc -l)
+if [ "$gpus" -ge 2 ]; then
   whisper 0 &
   omni 1
-else
+elif [ "$gpus" -eq 1 ]; then
   whisper 0
   omni 0
-fi
+fi  # no GPU: only IndicConformer runs
 wait
 
 outs=$(ls $D/whisper.jsonl $D/omnilingual.jsonl $D/indicconformer.jsonl 2>/dev/null)
