@@ -2,6 +2,82 @@
 
 Newest first. Every number here can be rebuilt with `atlas-eval` from the raw transcripts. Those live outside git, in `runs/`, until a round is frozen.
 
+## Vaani-Benchmark-V1.0, 24 Nov 2026: the held-out contamination check (Hindi)
+
+**Setup.** The Hindi set of `ARTPARK-IISc/Vaani-Benchmark-V1.0`: 5,050 segments from 1,062 speakers in 102 districts, 10.9 hours, none 40 s or longer. Each segment has three independent transcriptions. The set was published after IndicConformer and is in neither Vaani repository. The three M0 models ran with M0's settings on Kaggle (`runners/kaggle_bench.sh`), and `data/benchmark.py score` scored them in two ways:
+
+- **The benchmark's own WER** is approach 3 of Vaani's evaluation toolkit. A word counts as an error only if no transcription has it right, and a deletion only if all three transcriptions delete it.
+- **Our WER** is against transcription 1 with `normalise()`, as on M0.
+
+Intervals are 95%, from 1,000 speaker resamples. Omnilingual finished 3,264 segments before the week's Kaggle GPU hours ran out. Those are the first in file order, not a random sample, so its numbers cover those segments only. Its last 1,786 segments are still to run.
+
+All 5,050 segments:
+
+| Model | Benchmark's own WER | Our WER | Lenient |
+|---|---|---|---|
+| IndicConformer | 13.2% | 16.2% (15.6–17.0) | 12.0% |
+| Whisper-large-v3 | 26.0% | 29.6% (28.5–30.7) | 26.0% |
+| Transcription 2 | | 8.7% (8.2–9.4) | 7.0% |
+| Transcription 3 | | 11.1% (10.5–11.7) | 8.7% |
+
+The 3,264 segments Omnilingual finished (694 speakers):
+
+| Model | Benchmark's own WER | Our WER | Lenient |
+|---|---|---|---|
+| IndicConformer | 13.8% | 17.2% (16.4–18.0) | 12.8% |
+| Omnilingual 3B | 17.8% | 21.3% (20.4–22.3) | 17.5% |
+| Whisper-large-v3 | 27.2% | 31.3% (29.9–32.6) | 27.6% |
+| Transcription 2 | | 10.1% (9.4–10.8) | 7.9% |
+| Transcription 3 | | 11.8% (11.1–12.5) | 9.3% |
+
+**The contamination check.** A model trained on Vaani's main release has heard M0's speakers but not the benchmark's, so it should lose more than the others going from M0 to the benchmark. The benchmark is harder for every model, so compare each model's ratio of benchmark WER to M0 WER (our WER both times), and then the ratios against each other. That cancels what the two sets do to every model alike, though not what they do to one model alone.
+
+| Model | Segments | M0 WER | Benchmark WER | Benchmark ÷ M0 | Lenient, benchmark ÷ M0 |
+|---|---|---|---|---|---|
+| IndicConformer | 5,050 | 13.3% | 16.2% | 1.22 (1.15–1.30) | 1.28 (1.18–1.40) |
+| Whisper-large-v3 | 5,050 | 25.9% | 29.6% | 1.14 (1.08–1.21) | 1.18 (1.11–1.26) |
+| IndicConformer | 3,264 | 13.3% | 17.2% | 1.29 (1.21–1.39) | 1.37 (1.25–1.50) |
+| Omnilingual 3B | 3,264 | 18.6% | 21.3% | 1.15 (1.07–1.23) | 1.19 (1.10–1.29) |
+| Whisper-large-v3 | 3,264 | 25.9% | 31.3% | 1.21 (1.14–1.28) | 1.25 (1.17–1.35) |
+
+**Findings:**
+
+- **The pipeline reproduces the published number.** IndicConformer scores 13.2% on the benchmark's own measure, exactly its published Hindi WER. So the fetch, the runner and the scoring match the benchmark's.
+- **IndicConformer loses more than the others on held-out speakers. The gap is small, and it is real.**
+  - Its ratio against Whisper's is 1.07 (1.02–1.12), or 1.08 (1.03–1.15) lenient. Against Omnilingual's, on the segments both have, it is 1.13 (1.08–1.18).
+  - That fits some Vaani in IndicConformer's training data. It agrees with the train against held-out check on M0, where IndicConformer's ratio against Whisper's was 0.93 (0.86–1.01).
+  - It is worth about a point of WER. Had IndicConformer lost what Whisper loses, it would score about 15.2% here, not 16.2%, so M0 flatters it by roughly one point.
+  - Region explains a little of it. M0's districts are all in Hindi-belt states, and about half the benchmark's aren't. On the benchmark's Hindi-belt states alone (2,589 segments), the ratio against Whisper's is 1.06 (1.01–1.11), or 1.06 (1.00–1.13) lenient. Against Omnilingual's, on the shared segments there, it is 1.10 (1.05–1.15). The gap shrinks but stays.
+  - The two sets also differ in how the speech was segmented and in which batches transcribed it, which a ratio of ratios can't rule out. Only AI4Bharat can say what IndicConformer was trained on, so ask them (vaani_email_draft.md).
+- **IndicConformer's lead survives.** It scores 16.2% against Whisper's 29.6% on the whole set, and 17.2% against Omnilingual's 21.3% on the shared segments.
+- **Omnilingual shows no sign of it.** It loses slightly less than Whisper: 0.95 (0.91–0.99), or 0.95 (0.90–1.00) lenient. Those are the first 3,264 segments only, which are harder than the rest: Whisper scores 31.3% on them and 29.6% on all 5,050.
+- **Human transcribers disagree by 9–11%.**
+  - Transcriptions 2 and 3 score 8.7% and 11.1% against transcription 1, or 7.0% and 8.7% lenient.
+  - No model can meaningfully score below that against a single transcription. IndicConformer's 16.2% is 5.1 to 7.5 points above it.
+- **Districts where transcribers disagree are only a little harder for the models.** (Corrected 26 Nov; the first version of this section said 0.42.)
+  - Disagreement is measured as transcription 2 scored against transcription 3. Across the 102 districts, its rank correlation with WER is 0.23 for IndicConformer and 0.24 for Whisper. On the shared segments it is 0.26, 0.38 for Omnilingual and 0.29 for Whisper.
+  - Scoring transcriptions 2 and 3 against transcription 1 instead gives 0.42 and 0.40. That is inflated: the models' WER is scored against transcription 1 too, so a district whose transcription 1 is poor raises both. About half of the apparent link is errors in transcription 1, not speech that people find ambiguous.
+  - `data/benchmark.py score` also prints each district's three-reference WER, which a poor transcription 1 can't raise.
+  - Among districts with at least 50 segments, IndicConformer does worst in Sarguja, Chhattisgarh, at 22.8%, then Bihar's Jamui, Gopalganj and Bhagalpur, at about 17%. It does best in Madhya Pradesh: Dhar 5.6%, Katni 7.0% and Bhopal 7.9%.
+- **District rankings are only moderately reliable at the benchmark's sample sizes.**
+  - Split-half reliability is the rank correlation between the district WERs from two random halves of each district's speakers, averaged over 200 splits and corrected to full size (Spearman–Brown). It is 0.49 for IndicConformer and 0.45 for Whisper across the 102 districts; 38 of them have fewer than 30 segments.
+  - On M0's ten districts, with about 150 clips each, it is 0.67 for IndicConformer, 0.82 for Omnilingual and 0.82 for Whisper (`atlas-eval` prints it for every round).
+  - Four M0 districts are also in the benchmark, with other speakers and transcribers (`benchmark.py score --retest runs/m0/atlas.json`):
+
+    | District | Benchmark segments | IndicConformer, M0 | IndicConformer, benchmark | Whisper, M0 | Whisper, benchmark |
+    |---|---|---|---|---|---|
+    | Kabirdham | 26 | 16.1% | 22.6% | 31.9% | 51.7% |
+    | Rohtak | 110 | 16.1% | 9.8% | 29.7% | 17.2% |
+    | Katni | 105 | 11.5% | 7.0% | 20.1% | 16.8% |
+    | Dhar | 105 | 12.9% | 5.6% | 22.6% | 14.3% |
+
+  - Kabirdham stays the hardest, on only 26 segments. Rohtak, second-hardest on M0 and the district behind the lenient gate for all three models, is one of the easier districts on the benchmark. Four districts can't settle whether district ranks replicate. M1's Hindi districts against the benchmark's will (`--retest` on M1's round), and the M0 gate stays provisional until the listening audit.
+- **IndicConformer returned nothing for 12 segments.** All 12 are noisy: every reference opens with a noise tag (`<noise>`, `<static noise>`, `<bird sound>`), and on the same segments Whisper invents text, including its familiar "सब्सक्राइब करें". They count as all deletions, which is fair: the speech is there.
+- **Kaggle speeds, for planning M1:**
+  - Whisper took 6.2 hours for all 5,050 segments on a T4.
+  - Omnilingual took 7–12 s a segment on the other T4, probably because its default bfloat16 isn't native on a T4. At that pace, M1's 28,370 clips would take it 55 to 95 hours.
+  - IndicConformer took 2.4 hours on the CPU alone, which uses no GPU hours.
+
 ## M1, 23 Nov 2026: test sets from Vaani's official split (drafts)
 
 **Setup.** `data/m1.py` reads every row of the test split in `ARTPARK-IISc/Vaani-transcription-part`, small columns only. 64 of its 90 languages have a test split; the other 26 have train only. The rules are M0's, with one change: a real speaker ID, under 40 s, a non-empty normalised transcript, no speaker in two districts, and at most 4 clips per speaker instead of 8 (see decisions.md). A district qualifies with 100 usable clips, and its draft takes 150 where it can. Counts for every language and district are in `data/m1_test_survey.tsv`. The drafts are `data/manifests/m1_{language}.jsonl`, not frozen yet.
@@ -24,26 +100,31 @@ Newest first. Every number here can be rebuilt with `atlas-eval` from the raw tr
 
 - **The atlas can cover 149 of the test split's 162 districts** in at least one language. Hindi alone covers 93. Hindi was also recorded outside the Hindi belt, so its map includes districts such as Bangalore and Krishna.
 - **A Vaani speaker is the name's speaker part, not the speaker and session together.** The split repository has no speakerID column. The main repository's ID is the state's and district's first two letters plus the speaker part of the audio file name (Patna: `BIPA_…`). This reproduces all 793 M0 speaker hashes, so one person has the same hash in M0 and M1. Taking the following session part as well would count 102,825 speakers in Hindi's test split instead of 11,481.
-- **The official split keeps speakers apart, not images.** In Hindi, every generic test image and 73% of district-specific ones also appear in train. 80% of the Hindi draft's clips describe an image that train clips also describe. In the other large languages, 95–100% of generic-image clips and 20–79% of specific-image clips share their image with train. Dropping those clips would leave 67 Hindi districts with 100 clips, against 93. This is open (decisions.md).
+- **The official split keeps speakers apart, not images.** In Hindi, every generic test image and 73% of district-specific ones also appear in train. 80% of the Hindi draft's clips describe an image that train clips also describe. In the other large languages, 95–100% of generic-image clips and 20–79% of specific-image clips share their image with train. Dropping those clips would leave 67 Hindi districts with 100 clips, against 93.
+- **Holding the draft's images out of training would cost 44.5% of Hindi's training clips** (`m1.py images Hindi`, 26 Nov). Of 424,964 train clips, 178,664 (42.0%) describe a generic image the Hindi draft uses and 10,625 (2.5%) a district-specific one. So the test sets stay as drafted. Kaan leaves out only the 2.5%, and its results are reported on generic-image and specific-image clips separately (decisions.md, 26 Nov).
 - **Every qualifying district is on the map.** `data/vaani_districts.tsv` gained 16 districts that only the split repository has, mostly in Kerala, Tamil Nadu and Telangana.
-- **22 M0 speakers are in the Hindi draft.** M0 drew from all three splits, so that is expected; M0 isn't training data.
+- **40 M0 speakers are in the Hindi draft** (corrected 26 Nov from 22). M0 drew from all three splits, so that is expected; M0 isn't training data.
+- **No speaker ID collides.** Rebuilding speaker IDs from the first two letters of state and district could give two people in one state the same ID, and `usable()` would drop both. Across all 64 test languages, none of the 23,191 speaker IDs comes from two different speakers.
+- **Every clip now says whether its image is also in train** (`image_in_train`, 26 Nov): 21,866 of the 28,370 clips. The drafts are otherwise unchanged; the Hindi draft's SHA-256 is now `fa2e2bf0cd3e1efc0be9adab3cdd65d2e548fea2258bfa18605fe35d4b635b55`.
 
 ## M0, 22 Nov 2026: three baselines
 
-**Setup.** Ten Hindi districts (`data/m0_districts.tsv`), 1,511 clips from 793 speakers (`data/manifests/m0.jsonl`), run on a Kaggle T4. Models: Whisper-large-v3 (faster-whisper), Omnilingual ASR `omniASR_LLM_3B_v2` with a Hindi hint, and IndicConformer 600M. WER uses `normalise()`, and lenient WER uses `lenient()`. Intervals are 95%, from 1,000 speaker resamples. Rows are ordered by the best model's WER, worst first.
+**Setup.** Ten Hindi districts (`data/m0_districts.tsv`), 1,511 clips from 793 speakers (`data/manifests/m0.jsonl`), run on a Kaggle T4. Models: Whisper-large-v3 (faster-whisper), Omnilingual ASR `omniASR_LLM_3B_v2` with a Hindi hint, and IndicConformer 600M. WER uses `normalise()`, and lenient WER uses `lenient()`. Intervals are 95%, from 1,000 speaker resamples. Rows are ordered by the best model's WER, worst first. The raw transcripts are in `results/m0/`. On 26 Nov each district got its own bootstrap seed, so adding districts never moves another's interval; that moved these intervals by at most 0.5 points, and the gate below still holds.
+
+**M0 can never evaluate Kaan.** 967 of its clips are in Vaani's official train split (below), which Kaan trains on. Compare Kaan with the baselines on M1 only.
 
 | District | Whisper-large-v3 | Omnilingual 3B | IndicConformer |
 |---|---|---|---|
-| Kabirdham | 31.9% (29.4–34.5) | 23.4% (21.5–25.3) | 16.1% (14.7–17.8) |
-| Rohtak | 29.7% (25.9–33.0) | 21.6% (18.1–25.0) | 16.1% (13.2–18.8) |
-| West Champaran | 28.2% (23.9–33.3) | 20.5% (17.6–23.9) | 14.5% (12.2–17.1) |
-| Dhar | 22.6% (19.0–25.8) | 15.0% (12.0–18.0) | 12.9% (10.2–15.4) |
-| Patna | 23.7% (20.7–27.0) | 19.4% (15.8–23.3) | 12.6% (10.5–14.9) |
-| Lucknow | 24.0% (21.6–26.5) | 16.0% (13.6–18.4) | 12.3% (10.3–14.5) |
-| Garhwa | 22.2% (20.2–24.1) | 15.6% (13.7–17.7) | 11.8% (10.2–13.4) |
-| Bikaner | 26.1% (23.9–28.5) | 18.4% (16.4–20.6) | 11.5% (10.0–13.2) |
-| Katni | 20.1% (16.0–24.3) | 14.0% (10.6–17.1) | 11.5% (8.6–14.0) |
-| Lalitpur | 21.7% (18.8–24.7) | 14.8% (12.5–17.2) | 10.2% (8.5–12.0) |
+| Kabirdham | 31.9% (29.5–34.2) | 23.4% (21.5–25.2) | 16.1% (14.7–17.9) |
+| Rohtak | 29.7% (25.9–33.5) | 21.6% (18.1–25.2) | 16.1% (13.4–18.7) |
+| West Champaran | 28.2% (23.7–33.4) | 20.5% (17.4–23.8) | 14.5% (12.2–17.1) |
+| Dhar | 22.6% (18.9–26.2) | 15.0% (11.6–18.4) | 12.9% (10.4–15.4) |
+| Patna | 23.7% (20.7–27.0) | 19.4% (15.7–23.3) | 12.6% (10.5–15.2) |
+| Lucknow | 24.0% (21.5–26.3) | 16.0% (13.7–18.4) | 12.3% (10.3–14.4) |
+| Garhwa | 22.2% (20.2–24.1) | 15.6% (13.5–17.7) | 11.8% (10.3–13.4) |
+| Bikaner | 26.1% (23.8–28.5) | 18.4% (16.2–20.5) | 11.5% (10.1–13.3) |
+| Katni | 20.1% (15.7–24.0) | 14.0% (10.7–17.3) | 11.5% (8.7–14.1) |
+| Lalitpur | 21.7% (18.9–24.6) | 14.8% (12.4–17.3) | 10.2% (8.4–12.2) |
 | **All ten** | **25.9%** | **18.6%** | **13.3%** |
 
 Lenient WER on the same clips:
@@ -114,7 +195,7 @@ The label audit still has to confirm it.
 - **No source lists Vaani in IndicConformer's training data, and none rules it out.**
   - The 600M model card says only that it covers 22 languages, and its metadata names no datasets. AI4Bharat's GitHub and AIKosh name none either.
   - Shaip, one of Vaani's three transcription vendors, also worked on IndicVoices.
-  - On Vaani-Benchmark-V1.0, IndicConformer's published Hindi WER is 13.2, against 13.3% here. The two can't be compared directly: the benchmark scores against the closest of three references, which lowers WER, and its clips and normalisation differ.
+  - On Vaani-Benchmark-V1.0, IndicConformer's published Hindi WER is 13.2, against 13.3% here. The two can't be compared directly: the benchmark scores against the closest of three references, which lowers WER, and its clips and normalisation differ. (Running it ourselves on 24 Nov gave 13.2% on the benchmark's measure and 16.2% on ours: see the Vaani-Benchmark section.)
 - **Vaani has an official split, in a different repository from the one M0 used.** `ARTPARK-IISc/Vaani-transcription-part` has train, validation and test for Hindi (177, 52 and 52 files, 115 GB). Vaani's paper (arXiv 2603.28714) describes 80/10/10 within each district, with no speaker in two splits. M0 sampled from `ARTPARK-IISc/Vaani`, which has only `train`. M1 draws its frozen test sets from the official test split.
 - **How Vaani was transcribed.** The vendors were Shaip, Megdap and Karya, using guidelines adapted from Bhashini, with transcribers from the same district. A language expert reviews each batch against a 10% issue threshold. No accuracy figure is published.
 
@@ -128,6 +209,6 @@ The label audit still has to confirm it.
 
 - **IndicConformer gains a little more on train clips than the others, and the gap is too small to be sure of.** Against Whisper its ratio is 0.93 (0.86–1.01), or 0.91 (0.83–1.00) lenient. Against Omnilingual it's 0.95 (0.88–1.04). If the gap is real, it's worth about a point of WER on train clips.
 - **IndicConformer's lead doesn't depend on it.** On held-out clips alone it scores 14.2%, against 19.2% for Omnilingual and 26.4% for Whisper.
-- **This check is blind to training on the main Vaani release**, which holds train, validation and test clips alike. Vaani-Benchmark-V1.0 isn't: it was published in June 2026, after IndicConformer's release in March 2025, and isn't in either repository. Its Hindi set has 5,050 segments from 1,062 speakers in 102 districts (10.9 hours). Running all three models on it and comparing each model's benchmark WER with its M0 WER would settle contamination. Its three independent transcriptions per segment would also show how much transcribers disagree in each district, without a listener.
+- **This check is blind to training on the main Vaani release**, which holds train, validation and test clips alike. Vaani-Benchmark-V1.0 isn't: it was published in June 2026, after IndicConformer's release in March 2025, and isn't in either repository. Its Hindi set has 5,050 segments from 1,062 speakers in 102 districts (10.9 hours). Running all three models on it and comparing each model's benchmark WER with its M0 WER would settle contamination. Its three independent transcriptions per segment would also show how much transcribers disagree in each district, without a listener. (Done on 24 Nov: see the Vaani-Benchmark section.)
 
-**Still open for M0:** the listening audit, which has 300 clips picked and its scoring ready (`audit/audit.py score`) but needs a Hindi-speaking listener. Also open: the three models on Vaani-Benchmark-V1.0's Hindi set, which needs a Kaggle run.
+**Still open for M0:** the listening audit, which has 300 clips picked and its scoring ready (`audit/audit.py score`) but needs a Hindi-speaking listener. Until then, the benchmark's three transcriptions are interim, listener-free evidence for Rohtak, Dhar and Katni (see the Vaani-Benchmark section). The three models on Vaani-Benchmark-V1.0's Hindi set are done, except Omnilingual's last 1,786 segments.
