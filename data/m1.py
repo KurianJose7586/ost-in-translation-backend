@@ -17,41 +17,27 @@ import csv
 import hashlib
 import json
 import random
-import re
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import vaani
-from splits import SPLITS
+from vaani import SPLITS, parse
 
 ROOT = Path(__file__).parents[1]
-# state, district, speaker, recording session, image, start and end in ms
-NAME = re.compile(r"IISc_VaaniProject_[A-Z]+_([^_]+)_([^_]+)_([^_]+)_[^_]+_([^_]+-SPECIFIC_\d+|GENERIC_\d+)_(\d+)_(\d+)\.wav")
 MIN_CLIPS = 100
 # M0 took up to 8 clips per speaker, but the test split holds every clip of a speaker, so 8 would leave
 # a median of 27 speakers per Hindi district; 4 gives 42 and keeps 93 of 99 districts (notes/decisions.md).
 PER_SPEAKER = 4
 
 
-def parse(name):
-    """(speakerID, image, start in ms, seconds) from an audio file name, or None if it doesn't parse.
-    ARTPARK-IISc/Vaani's speakerID is the state's and district's first two letters, then the
-    name's speaker part (Patna: BIPA_...); this reproduces all 793 M0 speaker hashes."""
-    m = NAME.fullmatch(name or "")
-    if not m or m[3] in ("NA", "None", "null"):
-        return None
-    return f"{(m[1][:2] + m[2][:2]).upper()}_{m[3]}", m[4], int(m[5]), (int(m[6]) - int(m[5])) / 1000
-
-
 def _scan(language, split, columns):
     """Every row of one language's files in one split, reading only `columns`."""
-    vaani.REPO = SPLITS  # vaani's readers use this module-level repository
-    sizes = {p: s for p, s in vaani._sizes(language).items() if p.rsplit("/", 1)[1].startswith(split + "-")}
+    sizes = {p: s for p, s in vaani._sizes(SPLITS, language).items() if p.rsplit("/", 1)[1].startswith(split + "-")}
 
     def one(path):
-        groups = range(vaani._footer(path)[1].num_row_groups)
-        return list(vaani._rows(path, sizes[path], columns, groups=groups))
+        groups = range(vaani._footer(SPLITS, path)[1].num_row_groups)
+        return list(vaani._rows(SPLITS, path, sizes[path], columns, groups=groups))
 
     with ThreadPoolExecutor(8) as ex:
         return [r for batch in ex.map(one, sorted(sizes)) for r in batch]
@@ -78,6 +64,12 @@ def train_images(language):
                        lambda: sorted({r["referenceImage"] for r in _scan(language, "train", ["referenceImage"])} - {None})))
 
 
+def train_image_counts(language):
+    """How many train clips describe each image."""
+    return Counter(_cached(ROOT / f"runs/vaani/{language}_train_image_counts.json",
+                           lambda: Counter(r["referenceImage"] for r in _scan(language, "train", ["referenceImage"]) if r["referenceImage"])))
+
+
 def usable(clips):
     """M0's rules: {(state, district): {speaker: [clip, ...]}} for clips with a parsed speaker, under
     40 s and a non-empty normalised transcript, from speakers who appear in only one district."""
@@ -89,6 +81,10 @@ def usable(clips):
         if p and p[3] < vaani.MAX_SECONDS and normalise(c["transcript"] or ""):
             by[c["state"], c["district"]][p[0]].append(c)
     seen = Counter(s for speakers in by.values() for s in speakers)
+    # An ID in two districts is two people whose districts share their first letters (BIPA_d in Patna
+    # and Paschim), or one person in two districts; either way M0's rule leaves them out. Say how many.
+    if dropped := sum(n > 1 for n in seen.values()):
+        print(f"{dropped} speaker IDs appear in more than one district and are left out")
     return {d: {s: v for s, v in speakers.items() if seen[s] == 1} for d, speakers in by.items()}
 
 
@@ -145,10 +141,19 @@ def images(languages):
             shared = {i for i in mine if i in train}
             print(f"{language} {kind}: {len(shared)} of {len(set(mine))} test images are also in train "
                   f"({sum(i in train for i in mine) / max(1, len(mine)):.0%} of {len(mine)} clips)")
+        # The other side: how much training data keeping the M1 draft's images out of training would cost.
+        draft = ROOT / f"data/manifests/m1_{language.lower()}.jsonl"
+        if draft.exists():
+            used = {json.loads(line)["image"] for line in open(draft, encoding="utf-8")} - {None}
+            counts = train_image_counts(language)
+            n = sum(counts.values())
+            for kind in ("GENERIC", "SPECIFIC"):
+                k = sum(v for i, v in counts.items() if i in used and kind in i)
+                print(f"{language} {kind}: {k:,} of {n:,} train clips ({k / n:.1%}) describe an image the M1 draft uses")
 
 
 def cut(language, out, per_district, seed):
-    polygons, manifest = _polygons(), []
+    polygons, manifest, train = _polygons(), [], train_images(language)
     for (state, district), speakers in sorted(usable(test_rows(language)).items()):
         if capped(speakers) < MIN_CLIPS:
             continue
@@ -169,7 +174,8 @@ def cut(language, out, per_district, seed):
             manifest.append({
                 "id": f"{speaker}-{image}-{start}", "audio": None, "text": c["transcript"], "language": c["language"],
                 "state": state, "district": district, "speaker": speaker, "duration": round(seconds, 2),
-                "image": c["image"], "source": {"repo": SPLITS, "file": c["file"], "row": c["row"]},
+                "image": c["image"], "image_in_train": c["image"] in train,  # Kaan is scored on both sides (decisions.md)
+                "source": {"repo": SPLITS, "file": c["file"], "row": c["row"]},
                 "map": polygons.get((state, district), []),
             })
         print(f"{district}: {len(picked)} clips from {len({s for s, _ in picked})} speakers")

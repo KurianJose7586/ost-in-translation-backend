@@ -4,7 +4,14 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "audit"))
-from audit import disputed, estimate  # noqa: E402
+from audit import agree, disputed, estimate  # noqa: E402
+
+
+def test_agree(tmp_path):
+    rows = lambda *heard: "\n".join(f'{{"id": "{i}", "heard": "{h}", "unclear": {str(h == "?").lower()}}}' for i, h in enumerate(heard))
+    (tmp_path / "a.jsonl").write_text(rows("a b c d", "e f", "?"), encoding="utf-8")
+    (tmp_path / "b.jsonl").write_text(rows("a b x d", "e f", "g"), encoding="utf-8")
+    assert agree(tmp_path / "a.jsonl", tmp_path / "b.jsonl") == 1 / 6  # clip 2 is unclear to A, so left out
 
 
 def test_disputed():

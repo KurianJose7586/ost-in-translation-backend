@@ -3,6 +3,10 @@
     uv run python audit/audit.py pick   # data/manifests/m0_audit.jsonl, 30 clips per district
     uv run python audit/audit.py page   # runs/audit/index.html, once the audio is in runs/audit/audio
     uv run python audit/audit.py score RESULTS.jsonl   # the file the listener sends back
+    uv run python audit/audit.py agree A.jsonl B.jsonl  # two listeners on the same clips
+
+Use two listeners and give both the same 30 clips (one district), so the audit also
+says how far two careful listeners differ; the other districts can be split between them.
 
 Up to half of each district's clips are suspects: somewhere in the clip, all three
 models wrote the same word in place of a reference word (or all dropped it), after
@@ -16,7 +20,7 @@ send it to a listener, and they open index.html in a browser. No server needed.
 `score` treats what the listener heard as the truth. Per district it prints the
 reference WER (Vaani's transcript scored against the listener's) and the share
 of clips with any reference error. Then, per model, the district's lenient WER
-from runs/m0/atlas.json, and that WER corrected: minus the gap between scoring
+as atlas-eval scores it from results/m0, and that WER corrected: minus the gap between scoring
 the audited clips against Vaani and against the listener. Correcting the full
 district's WER by the gap is steadier than rescoring 30 clips. Everything is
 lenient, since listeners don't follow Vaani's spelling. Each audited clip is
@@ -33,12 +37,12 @@ from pathlib import Path
 import numpy as np
 
 from atlas_eval.normalize import lenient, normalise
-from atlas_eval.score import BOOTSTRAP, align, counts, read_jsonl, spaced
+from atlas_eval.score import BOOTSTRAP, align, build, counts, read_jsonl, spaced
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "data/manifests/m0.jsonl"
 AUDIT = ROOT / "data/manifests/m0_audit.jsonl"
-RUNS = ROOT / "runs/m0"
+RUNS = ROOT / "results/m0"
 OUT = ROOT / "runs/audit"
 MODELS = {"whisper": "Whisper", "omnilingual": "Omnilingual", "indicconformer": "IndicConformer"}
 PER_DISTRICT, SUSPECTS = 30, 15
@@ -118,7 +122,8 @@ def score(path):
     rows = {r["id"]: r for r in read_jsonl(AUDIT)}
     H = hyps()
     ids = {m: read_jsonl(RUNS / f"{m}.jsonl")[0]["model"] for m in MODELS}
-    full = {d["name"]: d["results"] for d in json.loads((RUNS / "atlas.json").read_text(encoding="utf-8"))["districts"]}
+    raw = {ids[m]: {r["id"]: r["hyp"] for r in read_jsonl(RUNS / f"{m}.jsonl")} for m in MODELS}
+    full = {d["name"]: d["results"]["Hindi"] for d in build({c["id"]: c for c in read_jsonl(MANIFEST)}, raw)["districts"]}
     per, skipped = defaultdict(lambda: defaultdict(list)), Counter()
     for r in read_jsonl(path):
         m = rows.get(r["id"])
@@ -166,5 +171,18 @@ def score(path):
         print(f"  {name}: {worst} {pct(w)} ÷ {best} {pct(b)} = {w / b:.2f}×; intervals {apart}")
 
 
+def agree(a, b):
+    """WER between two listeners on the clips both heard (neither said "Can't tell"), lenient."""
+    heard = [{r["id"]: lenient(r["heard"]) for r in read_jsonl(p) if not r["unclear"] and lenient(r["heard"])} for p in (a, b)]
+    both = sorted(heard[0].keys() & heard[1].keys())
+    if not both:
+        print("No clip was heard by both listeners.")
+        return None
+    e, w = map(sum, zip(*(counts(align(heard[0][i], heard[1][i])) for i in both)))
+    print(f"{len(both)} clips heard by both listeners: they differ by {e / w:.1%} WER (lenient). "
+          "A district's reference WER is only meaningful above this.")
+    return e / w
+
+
 if __name__ == "__main__":
-    {"pick": pick, "page": page, "score": score}[sys.argv[1]](*sys.argv[2:])
+    {"pick": pick, "page": page, "score": score, "agree": agree}[sys.argv[1]](*sys.argv[2:])

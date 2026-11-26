@@ -21,30 +21,26 @@ for the manifest's districts are cached in runs/vaani/.
 
 import argparse
 import json
-import re
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import vaani
-
-MAIN, SPLITS = "ARTPARK-IISc/Vaani", "ARTPARK-IISc/Vaani-transcription-part"
-# state, district, speaker, then the recording session, image, start and end (as in data/m1.py)
-NAME = re.compile(r"IISc_VaaniProject_[A-Z]+_([^_]+)_([^_]+)_([^_]+)_[^_]+_([^_]+-SPECIFIC_\d+|GENERIC_\d+)_\d+_\d+\.wav")
+from vaani import MAIN, SPLITS, parse
 
 
 def speaker(name):
-    return NAME.fullmatch(name).groups()[:3]  # state, district, speaker as written in file names
+    """The speakerID in an audio file name (vaani.parse), or None."""
+    return (parse(name) or [None])[0]
 
 
 def names(clips, language):
     """Audio file name of each manifest clip, read from its source row in ARTPARK-IISc/Vaani."""
-    vaani.REPO = MAIN  # vaani's readers use this module-level repository
-    sizes, rows = vaani._sizes(language), defaultdict(set)
+    sizes, rows = vaani._sizes(MAIN, language), defaultdict(set)
     for c in clips:
         rows[c["source"]["file"]].add(c["source"]["row"])
     with ThreadPoolExecutor(8) as ex:
-        found = ex.map(lambda kv: list(vaani._rows(kv[0], sizes[kv[0]], ["audio.path"], rows=kv[1])), rows.items())
+        found = ex.map(lambda kv: list(vaani._rows(MAIN, kv[0], sizes[kv[0]], ["audio.path"], rows=kv[1])), rows.items())
         got = {(r["file"], r["row"]): r["audio"]["path"] for batch in found for r in batch}
     return [got[c["source"]["file"], c["source"]["row"]] for c in clips]
 
@@ -53,17 +49,16 @@ def official(language, districts, cache):
     """Rows of the split repository in the given districts: {name, split, transcript}."""
     if cache.exists():
         return [json.loads(line) for line in open(cache, encoding="utf-8")]
-    vaani.REPO = SPLITS
-    sizes = vaani._sizes(language)
+    sizes = vaani._sizes(SPLITS, language)
 
     def one(path):
-        md = vaani._footer(path)[1]
+        md = vaani._footer(SPLITS, path)[1]
         d = md.schema.names.index("district")
         stats = [md.row_group(g).column(d).statistics for g in range(md.num_row_groups)]
         groups = [g for g, s in enumerate(stats) if any(s.min <= x <= s.max for x in districts)]
         split = path.rsplit("/", 1)[1].split("-")[0]
         return [{"name": r["audio"]["path"], "split": split, "transcript": r["transcript"]}
-                for r in vaani._rows(path, sizes[path], ["audio.path", "district", "transcript"], groups=groups)
+                for r in vaani._rows(SPLITS, path, sizes[path], ["audio.path", "district", "transcript"], groups=groups)
                 if r["district"] in districts]
 
     with ThreadPoolExecutor(8) as ex:
@@ -81,7 +76,8 @@ def match(manifest, out, language):
     by_name = {r["name"]: r for r in rows}
     by_speaker = defaultdict(set)
     for r in rows:
-        by_speaker[speaker(r["name"])].add(r["split"])
+        if s := speaker(r["name"]):
+            by_speaker[s].add(r["split"])
 
     found, tally = [], Counter()
     for c, name in zip(clips, names(clips, language)):

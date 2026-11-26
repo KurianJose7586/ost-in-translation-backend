@@ -6,6 +6,8 @@
 #   "nvidia-cublas-cu12; sys_platform == 'linux'",  # CTranslate2's GPU path needs CUDA 12 cuBLAS
 #   "nvidia-cudnn-cu12==9.*; sys_platform == 'linux'",  # and cuDNN 9
 # ]
+# [tool.uv]
+# exclude-newer = "2026-11-24T00:00:00Z"  # the versions the benchmark ran with; a later rerun gets the same ones
 # ///
 """Transcribe a manifest with Whisper through faster-whisper.
 
@@ -37,7 +39,7 @@ _cuda_libs_on_path()
 from faster_whisper import WhisperModel  # noqa: E402
 
 from langs import WHISPER  # noqa: E402
-from resume import finished  # noqa: E402
+from resume import failed, finished  # noqa: E402
 
 
 def main():
@@ -55,11 +57,14 @@ def main():
     model = WhisperModel(a.model, device=a.device, compute_type="default")
     with open(a.out, "a", encoding="utf-8") as out:
         for n, r in enumerate(rows, 1):
-            hyp = None
+            line = {"id": r["id"], "model": f"whisper-{a.model}", "hyp": None}
             if lang := WHISPER.get(r["language"]):
-                segments, _ = model.transcribe(r["audio"], language=lang, beam_size=5)
-                hyp = " ".join(s.text.strip() for s in segments)
-            out.write(json.dumps({"id": r["id"], "model": f"whisper-{a.model}", "hyp": hyp}, ensure_ascii=False) + "\n")
+                try:
+                    segments, _ = model.transcribe(r["audio"], language=lang, beam_size=5)
+                    line["hyp"] = " ".join(s.text.strip() for s in segments)
+                except Exception as e:  # see failed() in resume.py
+                    line |= failed(e)
+            out.write(json.dumps(line, ensure_ascii=False) + "\n")
             out.flush()
             if n % 100 == 0 or n == len(rows):
                 print(f"whisper: {n}/{len(rows)}", flush=True)

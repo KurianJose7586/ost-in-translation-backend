@@ -14,9 +14,11 @@ import argparse
 import bisect
 import csv
 import hashlib
+import http.client
 import io
 import json
 import random
+import re
 import struct
 import threading
 import time
@@ -29,15 +31,19 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
-REPO = "ARTPARK-IISc/Vaani"
+MAIN = "ARTPARK-IISc/Vaani"  # train only; M0 was drawn from it
+SPLITS = "ARTPARK-IISc/Vaani-transcription-part"  # the official train, validation and test split
 HERE = Path(__file__).parent
 RATE = 10  # requests per second, well under the Hub's 5,000 per 5 minutes
 MAX_SECONDS = 40  # Omnilingual ASR rejects longer clips
 PER_SPEAKER = 8  # clips per test speaker, so each district gets many speakers
+TRIES = 6  # failed requests (not rate limits) before giving up; back-off doubles from 2 s
 META = ["language", "duration", "speakerID", "gender", "state", "district", "isTranscriptionAvailable", "transcript",
         "UtteranceSequenceID", "referenceImage"]
 
 _lock, _next = threading.Lock(), [0.0]
+# IISc_VaaniProject_{tag}_{state}_{district}_{speaker}_{session}_{image}_{start}_{end}.wav, times in ms
+NAME = re.compile(r"IISc_VaaniProject_[A-Z]+_([^_]+)_([^_]+)_([^_]+)_[^_]+_([^_]+-SPECIFIC_\d+|GENERIC_\d+)_(\d+)_(\d+)\.wav")
 
 
 def _speaker(speaker_id):
@@ -45,31 +51,53 @@ def _speaker(speaker_id):
     return hashlib.sha256(speaker_id.encode()).hexdigest()[:12]
 
 
-def _get(path, start=0, end=None, tail=None):
-    """One paced range request to a Vaani file; waits out rate limits."""
+def parse(name):
+    """(speakerID, image, start in ms, seconds) from an audio file name, or None if it doesn't parse.
+
+    ARTPARK-IISc/Vaani's speakerID is the state's and district's first two letters, then the
+    name's speaker part (Patna: BIPA_...), leaving out the recording session; this reproduces
+    all 793 M0 speaker hashes. The split repository has no speakerID column, so it's rebuilt."""
+    m = NAME.fullmatch(name or "")
+    if not m or m[3] in ("NA", "None", "null"):
+        return None
+    return f"{(m[1][:2] + m[2][:2]).upper()}_{m[3]}", m[4], int(m[5]), (int(m[6]) - int(m[5])) / 1000
+
+
+def _get(repo, path, start=0, end=None, tail=None):
+    """One paced range request to a file in `repo`; waits out rate limits and retries failures."""
     from huggingface_hub import get_token
 
     headers = {"Authorization": f"Bearer {get_token()}", "Range": f"bytes=-{tail}" if tail else f"bytes={start}-{end - 1}"}
+    failures = 0
     while True:
         with _lock:
             now = time.monotonic()
             slot = _next[0] = max(_next[0], now) + 1 / RATE
         time.sleep(max(0.0, slot - now))
         try:
-            req = urllib.request.Request(f"https://huggingface.co/datasets/{REPO}/resolve/main/{path}", headers=headers)
+            req = urllib.request.Request(f"https://huggingface.co/datasets/{repo}/resolve/main/{path}", headers=headers)
             with urllib.request.urlopen(req, timeout=120) as r:
                 return r.read()
         except urllib.error.HTTPError as e:
-            if e.code != 429:
+            if e.code == 429:
+                time.sleep(int(e.headers.get("Retry-After") or 60))
+                continue
+            if e.code < 500:
                 raise
-            time.sleep(int(e.headers.get("Retry-After") or 60))
+            err = e
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as e:
+            err = e  # a dropped connection or timeout mustn't end a 10-minute scan
+        failures += 1
+        if failures == TRIES:
+            raise err
+        time.sleep(2**failures)
 
 
-def _footer(path):
-    tail = _get(path, tail=1 << 17)
+def _footer(repo, path):
+    tail = _get(repo, path, tail=1 << 17)
     (n,) = struct.unpack("<I", tail[-8:-4])
     if n + 8 > len(tail):
-        tail = _get(path, tail=n + 8)
+        tail = _get(repo, path, tail=n + 8)
     return tail, pq.read_metadata(io.BytesIO(b"PAR1" + tail[-(n + 8):]))
 
 
@@ -102,9 +130,9 @@ class _Sparse(io.RawIOBase):
         raise OSError(f"bytes {self.pos}..{self.pos + n} were not fetched")
 
 
-def _rows(path, size, columns, groups=None, rows=None):
+def _rows(repo, path, size, columns, groups=None, rows=None):
     """Read `columns` for the given row groups (or the groups holding `rows`) with one request per group."""
-    tail, md = _footer(path)
+    tail, md = _footer(repo, path)
     starts = list(accumulate((md.row_group(g).num_rows for g in range(md.num_row_groups)), initial=0))
     if rows is not None:
         groups = sorted({bisect.bisect_right(starts, r) - 1 for r in rows})
@@ -115,7 +143,7 @@ def _rows(path, size, columns, groups=None, rows=None):
         cols = [md.row_group(g).column(i) for i in leaves]
         offsets = [c.dictionary_page_offset if c.has_dictionary_page else c.data_page_offset for c in cols]
         lo, hi = min(offsets), max(o + c.total_compressed_size for o, c in zip(offsets, cols))
-        chunks.append((lo, _get(path, lo, hi)))
+        chunks.append((lo, _get(repo, path, lo, hi)))
     pf = pq.ParquetFile(_Sparse(size, chunks), pre_buffer=False)
     for g in groups:
         for i, r in enumerate(pf.read_row_group(g, columns=columns).to_pylist()):
@@ -123,17 +151,17 @@ def _rows(path, size, columns, groups=None, rows=None):
                 yield {**r, "file": path, "row": starts[g] + i}
 
 
-def _sizes(language):
+def _sizes(repo, language):
     from huggingface_hub import HfApi
 
-    return {f.path: f.size for f in HfApi().list_repo_tree(REPO, repo_type="dataset", path_in_repo=f"audio/{language}")}
+    return {f.path: f.size for f in HfApi().list_repo_tree(repo, repo_type="dataset", path_in_repo=f"audio/{language}")}
 
 
 def index(language, out):
-    sizes = _sizes(language)
+    sizes = _sizes(MAIN, language)
 
     def one(path):
-        md = _footer(path)[1]
+        md = _footer(MAIN, path)[1]
         d, t = md.schema.names.index("district"), md.schema.names.index("isTranscriptionAvailable")
         rgs = [md.row_group(g) for g in range(md.num_row_groups)]
         return path, [[rg.column(d).statistics.min, rg.column(d).statistics.max, rg.column(t).statistics.max == "Yes"] for rg in rgs]
@@ -173,7 +201,7 @@ def cut(index_path, districts, out, per_district, seed):
             for path, g in groups[b : b + 16]:
                 by_file[path].append(g)
             with ThreadPoolExecutor(8) as ex:
-                batches = ex.map(lambda kv: list(_rows(kv[0], idx["sizes"][kv[0]], META, groups=sorted(kv[1]))), by_file.items())
+                batches = ex.map(lambda kv: list(_rows(MAIN, kv[0], idx["sizes"][kv[0]], META, groups=sorted(kv[1]))), by_file.items())
                 for r in (r for batch in batches for r in batch):
                     if (r["state"] == state and r["isTranscriptionAvailable"] == "Yes" and r["duration"] < MAX_SECONDS
                             and r["speakerID"] not in (None, "", "NA") and normalise(r["transcript"] or "")):
@@ -215,15 +243,14 @@ def cut(index_path, districts, out, per_district, seed):
 
 
 def fetch(manifest, out_dir):
-    global REPO
     out = Path(out_dir).resolve()
     (out / "audio").mkdir(parents=True, exist_ok=True)
     with open(manifest, encoding="utf-8") as f:
         rows = [json.loads(line) for line in f]
-    # M1 manifests name their repository (Vaani-transcription-part, which has no speakerID column); M0's is REPO.
-    repos = {r["source"].get("repo", REPO) for r in rows}
+    # M1 manifests name their repository (Vaani-transcription-part); M0's names none and is MAIN.
+    repos = {r["source"].get("repo", MAIN) for r in rows}
     assert len(repos) == 1, f"a manifest must come from one repository, not {repos}"
-    REPO = repos.pop()
+    repo = repos.pop()
     # Resume: clips already on disk from an earlier, interrupted run are kept, not fetched again.
     saved = {p.stem: p for p in (out / "audio").iterdir() if p.suffix != ".part"}
     by_file = defaultdict(dict)
@@ -233,10 +260,10 @@ def fetch(manifest, out_dir):
         else:
             by_file[r["source"]["file"]][r["source"]["row"]] = r
     print(f"{len(rows) - sum(map(len, by_file.values()))} clips already saved, {sum(map(len, by_file.values()))} to fetch")
-    sizes = {k: v for lang in {f.split("/")[1] for f in by_file} for k, v in _sizes(lang).items()}
+    sizes = {k: v for lang in {f.split("/")[1] for f in by_file} for k, v in _sizes(repo, lang).items()}
 
     def one(path):
-        for a in _rows(path, sizes[path], ["audio", "transcript"], rows=set(by_file[path])):
+        for a in _rows(repo, path, sizes[path], ["audio", "transcript"], rows=set(by_file[path])):
             r = by_file[path][a["row"]]
             assert a["transcript"] == r["text"], f"row mismatch for {r['id']}"
             dest = out / "audio" / (r["id"] + (Path(a["audio"]["path"] or "").suffix or ".wav"))

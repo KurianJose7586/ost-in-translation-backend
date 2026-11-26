@@ -1,7 +1,7 @@
 """Vaani-Benchmark-V1.0: fetch one language as a manifest, and score the baselines on it.
 
     uv run --group data python data/benchmark.py fetch runs/bench [--language Hindi]
-    uv run python data/benchmark.py score runs/bench/manifest.jsonl runs/bench/*.jsonl [--m0 runs/m0]
+    uv run python data/benchmark.py score runs/bench/manifest.jsonl runs/bench/*.jsonl [--m0 runs/m0] [--retest ATLAS_JSON]
 
 The benchmark (ARTPARK-IISc/Vaani-Benchmark-V1.0; accept its terms first) is held
 out from both Vaani repositories and was published after IndicConformer, so it
@@ -16,12 +16,19 @@ of 40 s or more are dropped, as in M0. Don't commit it: the benchmark is gated.
 - the benchmark's own WER (its text cleaning and three-reference alignment), to
   check our runs against the published leaderboard;
 - WER and lenient WER against transcription_v1 with our normaliser, as in M0;
-- per district, how much the transcribers disagree (transcriptions 2 and 3
-  scored against 1), next to each model's WER;
+- per district, how much the transcribers disagree (transcription 2 scored
+  against 3, so it shares nothing with the models' WER against 1), next to each
+  model's WER and its three-reference WER, which a poor transcription 1 can't raise;
+- split-half reliability: how well half of each district's speakers predict the
+  district ranking that the other half gives;
 - with --m0 (a folder of M0 transcripts), each model's benchmark WER over its
-  M0 WER. A model trained on Vaani does better on M0 than on the benchmark,
-  relative to models that weren't; the same clips go to every model, so a ratio
-  of those ratios cancels how hard each set is. Intervals resample speakers.
+  M0 WER, on all districts and on Hindi-belt states only, as M0 is. A model trained
+  on Vaani does better on M0 than on the benchmark, relative to models that
+  weren't; the same clips go to every model, so a ratio of those ratios cancels
+  how hard each set is. Intervals resample speakers;
+- with --retest (an atlas round's JSON), the round's Hindi WER next to the
+  benchmark's for the districts both have: other speakers, recorded and
+  transcribed separately, so a district whose rank doesn't hold is noise.
 """
 
 import argparse
@@ -34,11 +41,14 @@ import numpy as np
 from jiwer import process_words
 
 from atlas_eval.normalize import lenient, normalise
-from atlas_eval.score import BOOTSTRAP, align, counts, read_jsonl, spaced
+from atlas_eval.score import BOOTSTRAP, align, counts, rank_corr, read_jsonl, reliability, spaced
 
 REPO = "ARTPARK-IISc/Vaani-Benchmark-V1.0"
 M0 = Path(__file__).parent / "manifests/m0.jsonl"
 TRANSCRIBERS = ["transcriber 2", "transcriber 3"]
+# Every M0 district is in these states; about half the benchmark's districts aren't.
+BELT = {"Bihar", "Chhattisgarh", "Delhi", "Haryana", "HimachalPradesh", "Jharkhand", "MadhyaPradesh", "Rajasthan",
+        "UttarPradesh", "Uttarakhand"}
 
 
 def fetch(out_dir, language):
@@ -140,7 +150,24 @@ def scorable(clips, hyps, models):
     return [c for c in clips if normalise(c["text"]) and lenient(c["text"]) and all(c["id"] in hyps[m] for m in models)]
 
 
-def score(manifest, paths, m0_dir):
+def district_3ref(clips, hyps, models):
+    """The benchmark's own WER per district, one per model."""
+    by = defaultdict(list)
+    for c in clips:
+        by[c["state"], c["district"]].append(c)
+    return {d: [approach3_wer(*([clean_text(c["refs"][k]) for c in cs] for k in range(3)), [clean_text(hyps[m][c["id"]]) for c in cs])
+                for m in models] for d, cs in by.items()}
+
+
+def by_speaker(clips, a, key):
+    """{key(clip): speakers × models × 4 summed counts}, for split-half reliability."""
+    out = defaultdict(dict)
+    for c, row in zip(clips, a):
+        out[key(c)][c["speaker"]] = out[key(c)].get(c["speaker"], 0) + row
+    return {k: np.array(list(v.values())) for k, v in out.items()}
+
+
+def score(manifest, paths, m0_dir, retest=None):
     hyps, rng = transcripts(paths), np.random.default_rng(0)
     models = sorted(hyps)
     clips = read_jsonl(manifest)
@@ -159,22 +186,34 @@ def score(manifest, paths, m0_dir):
         lo, hi = np.percentile(boot[:, k, 0], [2.5, 97.5])
         print(f"| {m} | {'' if bench is None else f'{bench:.1%}'} | {point[k, 0]:.1%} ({lo:.1%}–{hi:.1%}) | {point[k, 1]:.1%} |")
 
-    districts = group(clips, a, lambda c: (c["state"], c["district"]))
-    sizes = group(clips, np.ones(len(clips)), lambda c: (c["state"], c["district"]))
+    # Transcriber disagreement per district is transcription 2 scored against transcription 3. Scoring 2 and 3
+    # against 1 would share transcription 1 with the models' WER, so a poor transcription 1 would raise both.
+    key = lambda c: (c["state"], c["district"])
+    apart = group(clips, np.array([counts(align(normalise(c["refs"][2]), normalise(c["refs"][1]))) for c in clips]), key)
+    districts = group(clips, a, key)
+    three = district_3ref(clips, hyps, models)
+    sizes = group(clips, np.ones(len(clips)), key)
     speakers = defaultdict(set)
     for c in clips:
-        speakers[c["state"], c["district"]].add(c["speaker"])
-    wer = {d: v[:, 0] / v[:, 1] for d, v in districts.items()}  # per model, then transcribers 2 and 3
-    disagree = {d: v[len(models):, 0].sum() / v[len(models):, 1].sum() for d, v in districts.items()}
+        speakers[key(c)].add(c["speaker"])
+    wer = {d: v[:, 0] / v[:, 1] for d, v in districts.items()}  # per model, then transcriptions 2 and 3 against 1
+    disagree = {d: v[0] / v[1] if v[1] else 0.0 for d, v in apart.items()}
     order = sorted(wer, key=lambda d: -wer[d][: len(models)].min())
-    print(f"\n| District | Clips | Speakers | Transcribers disagree | {' | '.join(models)} |\n|---|---|---|---|{'---|' * len(models)}")
+    print(f"\n| District | Clips | Speakers | Transcriptions 2 and 3 disagree | {' | '.join(f'{m} (3 references)' for m in models)} |"
+          f"\n|---|---|---|---|{'---|' * len(models)}")
     for d in order:
-        cells = " | ".join(f"{x:.1%}" for x in wer[d][: len(models)])
+        cells = " | ".join(f"{x:.1%} ({y:.1%})" for x, y in zip(wer[d][: len(models)], three[d]))
         print(f"| {spaced(d[1])}, {spaced(d[0])} | {sizes[d]:.0f} | {len(speakers[d])} | {disagree[d]:.1%} | {cells} |")
-    rank = lambda x: np.argsort(np.argsort(x))
+    shares_t1 = {d: v[len(models):, 0].sum() / v[len(models):, 1].sum() for d, v in districts.items()}
     for k, m in enumerate(models):
-        rho = np.corrcoef(rank([disagree[d] for d in order]), rank([wer[d][k] for d in order]))[0, 1]
-        print(f"Rank correlation across districts, transcriber disagreement vs {m}: {rho:.2f}")
+        rho = rank_corr([disagree[d] for d in order], [wer[d][k] for d in order])
+        rho_t1 = rank_corr([shares_t1[d] for d in order], [wer[d][k] for d in order])
+        print(f"Rank correlation across districts, transcriber disagreement vs {m}: {rho:.2f} "
+              f"({rho_t1:.2f} with 2 and 3 scored against transcription 1, which the WER shares)")
+    halves = by_speaker(clips, a, key)
+    for k, m in enumerate(models):
+        r = reliability([v[:, k, :2] for v in halves.values()], np.random.default_rng(1))
+        print(f"Split-half reliability of district WER, {m}: {r:.2f}")
 
     if m0_dir:
         old = transcripts(sorted(Path(m0_dir).glob("*.jsonl")))
@@ -182,18 +221,40 @@ def score(manifest, paths, m0_dir):
         m0 = scorable(read_jsonl(M0), old, shared)
         m0_point, m0_boot = speaker_wer(m0, clip_counts(m0, old, shared), rng)
         ix = [models.index(m) for m in shared]
-        ratio, rboot = point[ix] / m0_point, boot[:, ix] / m0_boot  # above 1 = worse on the benchmark
-        print(f"\n{len(m0)} M0 clips. Benchmark WER (vs transcription 1) over M0 WER:\n")
-        print("| Model | M0 WER | Benchmark WER | Benchmark ÷ M0 | Lenient, benchmark ÷ M0 |\n|---|---|---|---|---|")
-        for k, m in enumerate(shared):
-            ci = [np.percentile(rboot[:, k, j], [2.5, 97.5]) for j in (0, 1)]
-            print(f"| {m} | {m0_point[k, 0]:.1%} | {point[ix[k], 0]:.1%} | {ratio[k, 0]:.2f} ({ci[0][0]:.2f}–{ci[0][1]:.2f}) "
-                  f"| {ratio[k, 1]:.2f} ({ci[1][0]:.2f}–{ci[1][1]:.2f}) |")
-        for i in range(len(shared)):
-            for j in range(i + 1, len(shared)):
-                for e, label in ((0, "WER"), (1, "lenient")):
-                    lo, hi = np.percentile(rboot[:, i, e] / rboot[:, j, e], [2.5, 97.5])
-                    print(f"  {shared[i]} ÷ {shared[j]}, {label}: {ratio[i, e] / ratio[j, e]:.2f} ({lo:.2f}–{hi:.2f})")
+        belt = [k for k, c in enumerate(clips) if c["state"] in BELT]
+        sets = [("All districts", point, boot),
+                (f"Hindi-belt states only, like M0 ({len(belt)} segments)",
+                 *speaker_wer([clips[k] for k in belt], a[belt], np.random.default_rng(2)))]
+        for label, p, b in sets:
+            ratio, rboot = p[ix] / m0_point, b[:, ix] / m0_boot  # above 1 = worse on the benchmark
+            print(f"\n{label}. {len(m0)} M0 clips. Benchmark WER (vs transcription 1) over M0 WER:\n")
+            print("| Model | M0 WER | Benchmark WER | Benchmark ÷ M0 | Lenient, benchmark ÷ M0 |\n|---|---|---|---|---|")
+            for k, m in enumerate(shared):
+                ci = [np.percentile(rboot[:, k, j], [2.5, 97.5]) for j in (0, 1)]
+                print(f"| {m} | {m0_point[k, 0]:.1%} | {p[ix[k], 0]:.1%} | {ratio[k, 0]:.2f} ({ci[0][0]:.2f}–{ci[0][1]:.2f}) "
+                      f"| {ratio[k, 1]:.2f} ({ci[1][0]:.2f}–{ci[1][1]:.2f}) |")
+            for i in range(len(shared)):
+                for j in range(i + 1, len(shared)):
+                    for e, name in ((0, "WER"), (1, "lenient")):
+                        lo, hi = np.percentile(rboot[:, i, e] / rboot[:, j, e], [2.5, 97.5])
+                        print(f"  {shared[i]} ÷ {shared[j]}, {name}: {ratio[i, e] / ratio[j, e]:.2f} ({lo:.2f}–{hi:.2f})")
+
+    if retest:
+        # Test-retest: the same districts, other speakers, recorded and transcribed separately.
+        with open(retest, encoding="utf-8") as f:
+            other = json.load(f)
+        slug = lambda d: re.sub(r"[^a-z0-9]+", "-", f"{d[0]}-{d[1]}".lower()).strip("-")
+        theirs = {d["id"]: d["results"].get("Hindi", {}) for d in other["districts"]}
+        both, name = [d for d in order if slug(d) in theirs], other["round"]
+        print(f"\n{len(both)} districts are in both round {name} and the benchmark (WER vs transcription 1):\n")
+        print(f"| District | {' | '.join(f'{m}: {name}, benchmark' for m in models)} |\n|---|{'---|' * len(models)}")
+        for d in both:
+            cells = " | ".join(f"{theirs[slug(d)].get(m, {}).get('wer', float('nan')):.1%}, {wer[d][k]:.1%}" for k, m in enumerate(models))
+            print(f"| {spaced(d[1])}, {spaced(d[0])} | {cells} |")
+        for k, m in enumerate(models):
+            pairs = [(theirs[slug(d)][m]["wer"], wer[d][k]) for d in both if "wer" in theirs[slug(d)].get(m, {})]
+            if len(pairs) >= 5:
+                print(f"Test-retest rank correlation, {m}: {rank_corr(*zip(*pairs)):.2f} over {len(pairs)} districts")
 
 
 def main():
@@ -206,11 +267,12 @@ def main():
     s.add_argument("manifest")
     s.add_argument("transcripts", nargs="+")
     s.add_argument("--m0", help="folder of M0 transcripts, scored against data/manifests/m0.jsonl")
+    s.add_argument("--retest", help="an atlas round's JSON (version 2) whose Hindi district WERs to compare")
     a = p.parse_args()
     if a.cmd == "fetch":
         fetch(a.out_dir, a.language)
     else:
-        score(a.manifest, a.transcripts, a.m0)
+        score(a.manifest, a.transcripts, a.m0, a.retest)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 # /// script
 # requires-python = ">=3.10,<3.13"
 # dependencies = ["transformers", "torch", "torchaudio", "soundfile", "onnxruntime"]
+# [tool.uv]
+# exclude-newer = "2026-11-24T00:00:00Z"  # the versions the benchmark ran with; a later rerun gets the same ones
 # ///
 """Transcribe a manifest with AI4Bharat's IndicConformer (600M, multilingual).
 
@@ -19,7 +21,7 @@ import torchaudio
 from transformers import AutoModel
 
 from langs import INDICCONFORMER
-from resume import finished
+from resume import failed, finished
 
 MODEL = "ai4bharat/indic-conformer-600m-multilingual"
 
@@ -38,12 +40,15 @@ def main():
     model = AutoModel.from_pretrained(MODEL, trust_remote_code=True)
     with open(a.out, "a", encoding="utf-8") as out:
         for n, r in enumerate(rows, 1):
-            hyp = None
+            line = {"id": r["id"], "model": f"indicconformer-{a.decoder}", "hyp": None}
             if lang := INDICCONFORMER.get(r["language"]):
-                audio, sr = sf.read(r["audio"], dtype="float32", always_2d=True)
-                wav = torchaudio.functional.resample(torch.from_numpy(audio.mean(1))[None], sr, 16000)
-                hyp = model(wav, lang, a.decoder)
-            out.write(json.dumps({"id": r["id"], "model": f"indicconformer-{a.decoder}", "hyp": hyp}, ensure_ascii=False) + "\n")
+                try:
+                    audio, sr = sf.read(r["audio"], dtype="float32", always_2d=True)
+                    wav = torchaudio.functional.resample(torch.from_numpy(audio.mean(1))[None], sr, 16000)
+                    line["hyp"] = model(wav, lang, a.decoder)
+                except Exception as e:  # see failed() in resume.py
+                    line |= failed(e)
+            out.write(json.dumps(line, ensure_ascii=False) + "\n")
             out.flush()
             if n % 100 == 0 or n == len(rows):
                 print(f"indicconformer: {n}/{len(rows)}", flush=True)

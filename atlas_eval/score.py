@@ -1,19 +1,29 @@
-"""Score transcripts per district and write the JSON the atlas site reads.
+"""Score transcripts per district and language, and write the JSON the atlas site reads.
 
-    atlas-eval MANIFEST TRANSCRIPTS... -o atlas.json [--round baseline]
+    atlas-eval MANIFEST TRANSCRIPTS... -o atlas.json [--round baseline] [--allow-partial]
 
-District WER is total word errors over total reference words, not a mean of
-clip WERs. Intervals come from a cluster bootstrap that resamples speakers,
-because clips from one speaker aren't independent. `wer_pooled` shrinks each
-district toward its language mean so a small district can't swing the map
-colours; tables show the raw `wer`. `wer_lenient` scores the same clips with
-`normalize.lenient`, which forgives spelling-only differences, using the same
-speaker resamples for its interval.
+A district is scored one language at a time: a Hindi WER and a Marathi WER averaged
+together mean nothing, and a model may support only one of the two. District WER is
+total word errors over total reference words, not a mean of clip WERs. Intervals come
+from a cluster bootstrap that resamples speakers, because clips from one speaker aren't
+independent; each district, language and model has its own seed, so adding a district
+never moves another's interval. `wer_pooled` shrinks each district toward its
+language's mean so a small district can't swing the map colours; tables show the raw
+`wer`. `wer_lenient` scores the same clips with `normalize.lenient`, which forgives
+spelling-only differences, using the same speaker resamples for its interval.
+
+Every model must have a transcript for every clip, or models would be compared on
+different clips; `--allow-partial` writes a progress round anyway, marked "partial".
+Clips a runner couldn't read (an "error" field in its transcript) are left out for
+every model. `reliability` is split-half: how well the district ranking from half of
+each district's speakers predicts the ranking from the other half.
 """
 
 import argparse
 import json
 import re
+import sys
+import zlib
 from collections import Counter, defaultdict
 
 import jiwer
@@ -23,6 +33,7 @@ from atlas_eval.normalize import lenient, normalise
 
 BOOTSTRAP = 1000
 EXAMPLES = 3
+SPLITS = 200  # random speaker splits for split-half reliability
 
 
 def read_jsonl(path):
@@ -59,12 +70,23 @@ def counts(rows):
     return sum(op != "C" for op, _, _ in rows), sum(op != "I" for op, _, _ in rows)
 
 
-def district_stats(clips, rng):
-    """clips: (speaker, errors, words, lenient_errors, lenient_words, char_errors, chars) per clip."""
+def rank_corr(a, b):
+    """Spearman's rank correlation (ties broken by order, which is fine for WERs)."""
+    rank = lambda x: np.argsort(np.argsort(x))
+    return float(np.corrcoef(rank(a), rank(b))[0, 1])
+
+
+def speaker_counts(clips):
+    """clips: (speaker, errors, words, lenient_errors, lenient_words, ...) -> speakers × 4 summed counts."""
     per_speaker = defaultdict(lambda: np.zeros(4))
     for speaker, *c in clips:
         per_speaker[speaker] += c[:4]
-    en = np.array(list(per_speaker.values()))
+    return np.array(list(per_speaker.values()))
+
+
+def district_stats(clips, rng):
+    """clips: (speaker, errors, words, lenient_errors, lenient_words, char_errors, chars) per clip."""
+    en = speaker_counts(clips)
     idx = rng.integers(0, len(en), (BOOTSTRAP, len(en)))
     boot = en[idx].sum(1)  # one row of summed [errors, words, lenient errors, lenient words] per resample
     strict, loose = boot[:, 0] / boot[:, 1], boot[:, 2] / boot[:, 3]
@@ -95,57 +117,110 @@ def pool(stats):
         s["wer_pooled"] = p
 
 
+def reliability(districts, rng, splits=SPLITS):
+    """Split-half reliability of district WER, or None with fewer than 5 districts.
+
+    districts: one speakers × 2+ array of [errors, words, ...] per district. Each split puts
+    half of every district's speakers on each side; the two sides' district WERs are rank-
+    correlated, averaged over splits, and Spearman-Brown corrected to the full sample size.
+    """
+    ds = [en for en in districts if len(en) >= 2]
+    if len(ds) < 5:
+        return None
+    rs = []
+    for _ in range(splits):
+        a, b = [], []
+        for en in ds:
+            p = rng.permutation(len(en))
+            x, y = en[p[: len(en) // 2]].sum(0), en[p[len(en) // 2 :]].sum(0)
+            a.append(x[0] / x[1])
+            b.append(y[0] / y[1])
+        rs.append(rank_corr(a, b))
+    r = float(np.mean(rs))
+    return 2 * r / (1 + r)
+
+
 def spaced(s):
     """Vaani writes place names in CamelCase (WestChamparan); the site shows West Champaran."""
     return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", s)
 
 
+def seed(*key):
+    return np.random.default_rng(zlib.crc32("/".join(key).encode()))
+
+
+def examples(refs, aligned, clip_wer):
+    """The EXAMPLES clips whose WER, averaged over models, is nearest the district's median clip."""
+    mean = {i: float(np.mean(w)) for i, w in clip_wer.items()}
+    if not mean:
+        return []
+    mid = float(np.median(list(mean.values())))
+    pick = sorted(mean, key=lambda i: (abs(mean[i] - mid), i))[:EXAMPLES]
+    return [{"id": i, "ref": refs[i], "align": aligned[i]} for i in sorted(pick)]
+
+
 def build(clips, hyps, round_name="baseline"):
     """clips: id -> manifest row. hyps: model -> id -> hypothesis (None = unsupported)."""
-    rng = np.random.default_rng(0)
     refs = {i: normalise(c["text"]) for i, c in clips.items()}
     loose_refs = {i: lenient(c["text"]) for i, c in clips.items()}
-    groups = defaultdict(list)
+    groups = defaultdict(lambda: defaultdict(list))  # (state, district) -> language -> clip ids
     for i, c in clips.items():
-        groups[(c["state"], c["district"])].append(i)
+        groups[c["state"], c["district"]][c["language"]].append(i)
 
-    districts, by_language = [], defaultdict(list)
-    for (state, name), ids in sorted(groups.items()):
-        ids.sort()
-        langs = Counter(clips[i]["language"] for i in ids)
+    districts, by_language, halves = [], defaultdict(list), defaultdict(list)
+    for (state, name), langs in sorted(groups.items()):
+        did = re.sub(r"[^a-z0-9]+", "-", f"{state}-{name}".lower()).strip("-")
+        total = sum(map(len, langs.values()))
         d = {
-            "id": re.sub(r"[^a-z0-9]+", "-", f"{state}-{name}".lower()).strip("-"),
+            "id": did,
             "name": spaced(name),
             "state": spaced(state),
-            "languages": {lang: n / len(ids) for lang, n in langs.most_common()},
+            "languages": {lang: len(ids) / total for lang, ids in sorted(langs.items(), key=lambda kv: (-len(kv[1]), kv[0]))},
             "results": {},
+            "examples": {},
         }
-        if polygons := clips[ids[0]].get("map"):
+        if polygons := clips[next(iter(langs.values()))[0]].get("map"):
             d["map"] = polygons  # 2011 map polygons this district covers
-        aligned = defaultdict(dict)
-        for model, h in sorted(hyps.items()):
-            seen = [i for i in ids if i in h]
-            if not seen:
-                continue
-            scored = []
-            for i in seen:
-                if h[i] is None or not refs[i]:
-                    continue
-                hyp = normalise(h[i])
-                rows = aligned[i][model] = align(refs[i], hyp)
-                loose = counts(align(loose_refs[i], lenient(h[i])))
-                scored.append((clips[i]["speaker"], *counts(rows), *loose, char_errors(refs[i], hyp), len(refs[i])))
-            if not scored:
-                d["results"][model] = {"status": "unsupported"}
-                continue
-            d["results"][model] = district_stats(scored, rng)
-            by_language[(model, langs.most_common(1)[0][0])].append(d["results"][model])
-        d["examples"] = [{"id": i, "ref": refs[i], "align": aligned[i]} for i in ids if aligned[i]][:EXAMPLES]
+        for lang, ids in sorted(langs.items()):
+            ids.sort()
+            results, aligned, clip_wer = {}, defaultdict(dict), defaultdict(list)
+            for model, h in sorted(hyps.items()):
+                scored = []
+                for i in ids:
+                    if i not in h or h[i] is None or not refs[i]:
+                        continue
+                    hyp = normalise(h[i])
+                    rows = aligned[i][model] = align(refs[i], hyp)
+                    e, n = counts(rows)
+                    clip_wer[i].append(e / n)
+                    loose = counts(align(loose_refs[i], lenient(h[i])))
+                    scored.append((clips[i]["speaker"], e, n, *loose, char_errors(refs[i], hyp), len(refs[i])))
+                if scored:
+                    results[model] = district_stats(scored, seed(did, lang, model))
+                    by_language[model, lang].append(results[model])
+                    halves[model, lang].append(speaker_counts(scored))
+                elif any(i in h for i in ids):
+                    results[model] = {"status": "unsupported"}
+            if results:
+                d["results"][lang] = results
+                d["examples"][lang] = examples(refs, aligned, clip_wer)
         districts.append(d)
 
     for stats in by_language.values():
         pool(stats)
-    return {"version": 1, "round": round_name, "models": sorted(hyps), "districts": districts}
+    rel = defaultdict(dict)
+    for (model, lang), ds in sorted(halves.items()):
+        if (r := reliability(ds, seed("reliability", lang, model))) is not None:
+            rel[lang][model] = r
+    languages = Counter(c["language"] for c in clips.values())
+    return {
+        "version": 2,
+        "round": round_name,
+        "models": sorted(hyps),
+        "languages": [lang for lang, _ in sorted(languages.items(), key=lambda kv: (-kv[1], kv[0])) if any(lang in d["results"] for d in districts)],
+        "reliability": dict(rel),
+        "districts": districts,
+    }
 
 
 def _round(x):
@@ -164,16 +239,33 @@ def main(argv=None):
     p.add_argument("transcripts", nargs="+")
     p.add_argument("-o", "--out", required=True)
     p.add_argument("--round", default="baseline")
+    p.add_argument("--allow-partial", action="store_true", help="write a round even if some model lacks some clips")
     a = p.parse_args(argv)
 
     clips = {c["id"]: c for c in read_jsonl(a.manifest)}
-    hyps = defaultdict(dict)
+    hyps, failed = defaultdict(dict), set()
     for path in a.transcripts:
         for t in read_jsonl(path):
             if t["id"] in clips:
                 hyps[t["model"]][t["id"]] = t["hyp"]
+                if t.get("error"):
+                    failed.add(t["id"])
+    for model, h in sorted(hyps.items()):
+        print(f"{model}: transcripts for {len(h)} of {len(clips)} clips", file=sys.stderr)
+    partial = any(len(h) < len(clips) for h in hyps.values())
+    if partial and not a.allow_partial:
+        sys.exit("Some models lack transcripts for some clips, so they would be scored on different clips. "
+                 "Finish the runs, or pass --allow-partial to write a progress round marked partial.")
+    if failed:
+        print(f"{len(failed)} clips a runner couldn't read are left out for every model", file=sys.stderr)
+        clips = {i: c for i, c in clips.items() if i not in failed}
+    out = build(clips, hyps, a.round)
+    if partial:
+        out["partial"] = True
+    for lang, models in out["reliability"].items():
+        print(f"split-half reliability, {lang}: " + ", ".join(f"{m} {r:.2f}" for m, r in models.items()), file=sys.stderr)
     with open(a.out, "w", encoding="utf-8") as f:
-        json.dump(_round(build(clips, hyps, a.round)), f, ensure_ascii=False, indent=1)
+        json.dump(_round(out), f, ensure_ascii=False, indent=1)
 
 
 if __name__ == "__main__":
